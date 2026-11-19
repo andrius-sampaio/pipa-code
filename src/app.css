@@ -22,7 +22,8 @@
 }
 
 /* Desktop layout */
-.desktop-layout { display:grid; height:100%; gap:0; position:relative; }
+.desktop-layout { display:flex; flex-direction:row; height:100%; gap:0; position:relative; overflow:hidden; align-items:stretch; }
+.bottom-collapse { display:flex; flex-direction:column; width:100%; }
 .activitybar {
   display:flex; flex-direction:column; gap:.35rem; padding:.4rem .3rem;
   background: color-mix(in srgb, var(--panel) 60%, transparent);
