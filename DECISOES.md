@@ -28,3 +28,9 @@ Este arquivo registra decisões importantes e o motivo. Formato: data, decisão,
 
 ### 7. Fonte monoespaçada: do sistema
 - **Decisão:** usar fonte monoespaçada do sistema (sem download externo), conforme restrição offline.
+## 2026-11-19 - Fase 7
+
+### 8. Python: Pyodide (escolhido) vs Skulpt (alternativa)
+- Comparacao: Pyodide (Python 3, ~14 MB, WASM, mais compativel) vs Skulpt (Python 2, ~1-2 MB, JS puro, menos compativel).
+- Decisao: usar Pyodide como padrao, carregado sob demanda com aviso de tamanho e cache offline. Skulpt fica como alternativa futura.
+- Implementacao: arquivos em public/pyodide/, cache-first no Service Worker, botao Parar recarrega instancia, tempo maximo padrao 10s.

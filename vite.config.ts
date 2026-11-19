@@ -28,9 +28,16 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/offline/],
+        navigateFallbackDenylist: [/^\/offline/, /^\/pyodide\//],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
+        runtimeCaching: [
+          {
+            urlPattern: /^\/pyodide\//,
+            handler: 'CacheFirst',
+            options: { cacheName: 'pyodide-cache', expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 365 } },
+          },
+        ],
       },
       devOptions: {
         enabled: false,

@@ -40,3 +40,8 @@
 - Heurística de estrutura + botão "Separar para mim".
 - Autocompletar camada A (palavras-chave, snippets, símbolos) com Tab.
 - Painel Tutor com silenciar.
+
+## [0.7.0] - Fase 7 (Python opcional)
+- Pyodide carregado sob demanda com aviso de tamanho e cache offline.
+- print/input, botao Parar, tempo maximo.
+- Arquivos Pyodide em public/pyodide/ (sem CDN).

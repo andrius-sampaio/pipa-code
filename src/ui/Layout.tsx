@@ -7,6 +7,7 @@ import { ConsolePanel } from './ConsolePanel'
 import type { ConsoleEntry } from './ConsolePanel'
 import { ProblemsPanel } from './ProblemsPanel'
 import { TutorPanel } from './TutorPanel'
+import { PythonPanel } from './PythonPanel'
 import { loadLanguageExtension, languageFromPath } from '../editor/languages'
 import { writeFile, findFile } from '../storage/projects'
 import type { ProjectRecord } from '../storage/db'
@@ -17,19 +18,22 @@ interface LayoutProps {
 }
 
 function BottomPanel({ consoleEntries, setConsoleEntries, diagnostics, activeFile, contents, project, refreshFiles }: any) {
-  const [tab, setTab] = useState<'problems' | 'console' | 'tutor'>('problems')
+  const [tab, setTab] = useState<'problems' | 'console' | 'tutor' | 'python'>('problems')
   const content = activeFile ? (contents[activeFile] ?? '') : ''
+  const isPy = !!activeFile && activeFile.endsWith('.py')
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
       <div class="bottom-tabs">
         <button class={tab === 'problems' ? 'active' : ''} onClick={() => setTab('problems')}>Problemas ({diagnostics.length})</button>
         <button class={tab === 'console' ? 'active' : ''} onClick={() => setTab('console')}>Console ({consoleEntries.length})</button>
         <button class={tab === 'tutor' ? 'active' : ''} onClick={() => setTab('tutor')}>Tutor</button>
+        {isPy && <button class={tab === 'python' ? 'active' : ''} onClick={() => setTab('python')}>Python</button>}
       </div>
       <div class="panel-body" style={{ flex:1, overflow:'auto' }}>
         {tab === 'problems' && <ProblemsPanel diagnostics={diagnostics} />}
         {tab === 'console' && <ConsolePanel entries={consoleEntries} onClear={() => setConsoleEntries([])} />}
         {tab === 'tutor' && <TutorPanel activeFile={activeFile} content={content} project={project} onRefreshFiles={refreshFiles} />}
+        {tab === 'python' && <PythonPanel content={content} />}
       </div>
     </div>
   )

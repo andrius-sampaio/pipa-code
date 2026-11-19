@@ -16,7 +16,7 @@ function walk(dir) {
   return out
 }
 
-const files = walk(DIST).filter((f) => f.endsWith('.js'))
+const files = walk(DIST).filter((f) => f.endsWith('.js') && !f.includes('pyodide'))
 let total = 0
 for (const f of files) {
   const buf = readFileSync(f)
