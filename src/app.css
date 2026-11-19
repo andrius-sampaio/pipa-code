@@ -18,8 +18,14 @@
 .panel-close { min-height:20px; padding:0 .4rem; font-size:.9rem; }
 .panel-body { flex:1; padding:.5rem; overflow:auto; font-size:.85rem; }
 .editor-area { display:flex; flex-direction:column; min-width:0; min-height:0; }
-.tabs { padding:.3rem .5rem; background:var(--panel); border-bottom:1px solid var(--border); font-size:.8rem; color:var(--muted); }
+.tabs { display:flex; gap:.2rem; padding:.25rem .4rem; background:var(--panel); border-bottom:1px solid var(--border); overflow-x:auto; flex-shrink:0; }
+.tab { background:transparent; border:1px solid var(--border); border-radius:4px 4px 0 0; padding:.2rem .5rem; font-size:.8rem; white-space:nowrap; }
+.tab.active { background:var(--bg); border-bottom-color:var(--bg); }
+.tab-close { margin-left:.4rem; opacity:.7; }
+.editor-host { flex:1; min-height:0; display:flex; flex-direction:column; }
 .editor-placeholder { flex:1; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:.9rem; }
+.cm-host { flex:1; min-height:0; overflow:hidden; }
+.cm-host .cm-editor { height:100%; }
 .bottom-panel { grid-column:1/5; max-height:35%; min-height:80px; border-top:1px solid var(--border); display:flex; flex-direction:column; }
 .preview { border-left:1px solid var(--border); }
 

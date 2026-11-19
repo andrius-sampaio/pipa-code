@@ -1,6 +1,9 @@
-import { useState, useEffect, useCallback } from 'preact/hooks'
+import { useState, useEffect, useCallback, useRef } from 'preact/hooks'
 import { loadPrefs, savePrefs, type Prefs, type Theme } from '../app/preferences'
 import { Explorer } from './Explorer'
+import { Editor } from '../editor/Editor'
+import { loadLanguageExtension } from '../editor/languages'
+import { writeFile, findFile } from '../storage/projects'
 import type { ProjectRecord } from '../storage/db'
 
 interface LayoutProps {
@@ -11,7 +14,11 @@ interface LayoutProps {
 export function Layout({ project, onClose }: LayoutProps) {
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs)
   const [showDesktopSuggest, setShowDesktopSuggest] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<string | null>(null)
+  const [openFiles, setOpenFiles] = useState<string[]>([])
+  const [activeFile, setActiveFile] = useState<string | null>(null)
+  const [contents, setContents] = useState<Record<string, string>>({})
+  const [langs, setLangs] = useState<Record<string, any>>({})
+  const saveTimers = useRef<Record<string, number>>({})
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', prefs.theme === 'dark' ? '' : prefs.theme)
@@ -20,8 +27,6 @@ export function Layout({ project, onClose }: LayoutProps) {
   }, [prefs.theme, prefs.zoom])
 
   useEffect(() => { savePrefs(prefs) }, [prefs])
-
-
 
   useEffect(() => {
     if (prefs.mode === 'desktop') return
@@ -71,6 +76,49 @@ export function Layout({ project, onClose }: LayoutProps) {
     setPrefs((p) => ({ ...p, desktopPanels: { ...p.desktopPanels, [key]: !p.desktopPanels[key] } }))
   }
 
+  const openFile = useCallback(async (path: string) => {
+    if (!openFiles.includes(path)) {
+      setOpenFiles((prev) => [...prev, path])
+      // carregar conteúdo
+      const rec = await findFile(project.id, path)
+      setContents((prev) => ({ ...prev, [path]: rec?.content ?? '' }))
+      // carregar linguagem (lazy)
+      if (!langs[path]) {
+        const ext = await loadLanguageExtension(path)
+        setLangs((prev) => ({ ...prev, [path]: ext }))
+      }
+    }
+    setActiveFile(path)
+  }, [openFiles, project.id, langs])
+
+
+  const handleSelectFile = useCallback((path: string | null) => {
+    if (path) openFile(path)
+  }, [openFile])
+
+  const closeTab = (path: string) => {
+    setOpenFiles((prev) => prev.filter((p) => p !== path))
+    setContents((prev) => { const c = { ...prev }; delete c[path]; return c })
+    if (activeFile === path) {
+      const remaining = openFiles.filter((p) => p !== path)
+      setActiveFile(remaining.length ? remaining[remaining.length - 1] : null)
+    }
+  }
+
+  const handleChange = (path: string, value: string) => {
+    setContents((prev) => ({ ...prev, [path]: value }))
+    // autosave com debounce
+    if (saveTimers.current[path]) window.clearTimeout(saveTimers.current[path])
+    saveTimers.current[path] = window.setTimeout(() => {
+      writeFile(project.id, path, value).catch(() => {})
+    }, 600)
+  }
+
+  const handleSave = (path: string) => {
+    if (saveTimers.current[path]) window.clearTimeout(saveTimers.current[path])
+    writeFile(project.id, path, contents[path] ?? '').catch(() => {})
+  }
+
   return (
     <div class={`minicode-app mode-${prefs.mode}`}>
       <header class="topbar">
@@ -99,9 +147,13 @@ export function Layout({ project, onClose }: LayoutProps) {
 
       <main class="workspace">
         {prefs.mode === 'desktop' ? (
-          <DesktopLayout prefs={prefs} togglePanel={togglePanel} project={project} selectedFile={selectedFile} onSelectFile={setSelectedFile} />
+          <DesktopLayout prefs={prefs} togglePanel={togglePanel} project={project} openFiles={openFiles} activeFile={activeFile}
+            contents={contents} langs={langs} onSelectFile={handleSelectFile} onCloseTab={closeTab} onActivate={setActiveFile}
+            onChange={handleChange} onSave={handleSave} />
         ) : (
-          <TouchLayout project={project} selectedFile={selectedFile} onSelectFile={setSelectedFile} />
+          <TouchLayout project={project} openFiles={openFiles} activeFile={activeFile}
+            contents={contents} langs={langs} onSelectFile={handleSelectFile} onCloseTab={closeTab} onActivate={setActiveFile}
+            onChange={handleChange} onSave={handleSave} />
         )}
       </main>
 
@@ -109,13 +161,13 @@ export function Layout({ project, onClose }: LayoutProps) {
         <span>Modo: {prefs.mode === 'desktop' ? 'Desktop' : 'Toque'}</span>
         <span>Zoom: {Math.round(prefs.zoom * 100)}%</span>
         <span>Tema: {prefs.theme}</span>
-        {selectedFile && <span>Arquivo: {selectedFile}</span>}
+        {activeFile && <span>Arquivo: {activeFile}</span>}
       </footer>
     </div>
   )
 }
 
-function DesktopLayout({ prefs, togglePanel, project, selectedFile, onSelectFile }: any) {
+function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave }: any) {
   return (
     <div class="desktop-layout">
       <aside class="activitybar">
@@ -130,13 +182,27 @@ function DesktopLayout({ prefs, togglePanel, project, selectedFile, onSelectFile
             <button class="panel-close" onClick={() => togglePanel('explorer')} aria-label="Fechar explorador">×</button>
           </header>
           <div class="panel-body">
-            <Explorer project={project} selectedFile={selectedFile} onSelectFile={onSelectFile} />
+            <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} />
           </div>
         </aside>
       )}
       <section class="editor-area">
-        <div class="tabs">{selectedFile || 'sem arquivo aberto'}</div>
-        <div class="editor-placeholder">Editor (CodeMirror) — Fase 3{selectedFile ? ` · ${selectedFile}` : ''}</div>
+        <div class="tabs">
+          {openFiles.length === 0 && <span class="muted">Nenhum arquivo aberto</span>}
+          {openFiles.map((p: string) => (
+            <button key={p} class={`tab ${activeFile === p ? 'active' : ''}`} onClick={() => onActivate(p)}>
+              {p.split('/').pop()}
+              <span class="tab-close" onClick={(e) => { e.stopPropagation(); onCloseTab(p) }}>×</span>
+            </button>
+          ))}
+        </div>
+        <div class="editor-host">
+          {activeFile ? (
+            <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} />
+          ) : (
+            <div class="editor-placeholder">Abra um arquivo no explorador</div>
+          )}
+        </div>
       </section>
       {prefs.desktopPanels.preview && (
         <aside class="panel preview">
@@ -160,13 +226,31 @@ function DesktopLayout({ prefs, togglePanel, project, selectedFile, onSelectFile
   )
 }
 
-function TouchLayout({ project, selectedFile, onSelectFile }: any) {
+function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave }: any) {
   const [tab, setTab] = useState<'files' | 'code' | 'result' | 'tutor'>('code')
   return (
     <div class="touch-layout">
       <div class="touch-content">
-        {tab === 'files' && <Explorer project={project} selectedFile={selectedFile} onSelectFile={onSelectFile} />}
-        {tab === 'code' && <div class="editor-placeholder">Editor (Fase 3){selectedFile ? ` · ${selectedFile}` : ''}</div>}
+        {tab === 'files' && <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} />}
+        {tab === 'code' && (
+          <div class="editor-host">
+            {openFiles.length > 0 && (
+              <div class="tabs">
+                {openFiles.map((p: string) => (
+                  <button key={p} class={`tab ${activeFile === p ? 'active' : ''}`} onClick={() => onActivate(p)}>
+                    {p.split('/').pop()}
+                    <span class="tab-close" onClick={(e) => { e.stopPropagation(); onCloseTab(p) }}>×</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {activeFile ? (
+              <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} />
+            ) : (
+              <div class="editor-placeholder">Abra um arquivo em Arquivos</div>
+            )}
+          </div>
+        )}
         {tab === 'result' && <div class="panel-body">Resultado (Fase 4)</div>}
         {tab === 'tutor' && <div class="panel-body">Tutor (Fase 6)</div>}
       </div>

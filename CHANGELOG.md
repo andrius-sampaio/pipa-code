@@ -17,3 +17,9 @@
 - Tela inicial com projetos recentes, modelos prontos.
 - Criar/renomear/duplicar/excluir arquivos e pastas; importar arquivos e .zip; exportar .zip.
 - Menu de contexto (clique direito / toque longo).
+
+## [0.3.0] - Fase 3 (editor com abas)
+- CodeMirror 6 integrado com abas (abrir/fechar), salvamento automático com debounce.
+- Detecção de linguagem pela extensão, carregamento lazy por linguagem.
+- Atalhos: Ctrl+S salvar. Tab indenta.
+- Barra de símbolos permanece no modo Toque.
