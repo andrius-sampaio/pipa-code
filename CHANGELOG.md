@@ -34,3 +34,9 @@
 - Diagnósticos de sintaxe via parser Lezer + regras extras (HTML, CSS, JS, JSON, Python).
 - Painel Problemas clicável e contadores na barra de status.
 - Linter integrado ao CodeMirror (sublinhado ondulado).
+
+## [0.6.0] - Fase 6 (tutor e autocompletar)
+- Motor de tutor por regras, dicas em português, detecção de nível, modo Aprendizado/Produtividade.
+- Heurística de estrutura + botão "Separar para mim".
+- Autocompletar camada A (palavras-chave, snippets, símbolos) com Tab.
+- Painel Tutor com silenciar.

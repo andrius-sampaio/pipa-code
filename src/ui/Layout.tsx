@@ -6,6 +6,7 @@ import { Preview } from '../preview/Preview'
 import { ConsolePanel } from './ConsolePanel'
 import type { ConsoleEntry } from './ConsolePanel'
 import { ProblemsPanel } from './ProblemsPanel'
+import { TutorPanel } from './TutorPanel'
 import { loadLanguageExtension, languageFromPath } from '../editor/languages'
 import { writeFile, findFile } from '../storage/projects'
 import type { ProjectRecord } from '../storage/db'
@@ -15,16 +16,20 @@ interface LayoutProps {
   onClose: () => void
 }
 
-function BottomPanel({ consoleEntries, setConsoleEntries, diagnostics }: any) {
-  const [tab, setTab] = useState<'problems' | 'console'>('problems')
+function BottomPanel({ consoleEntries, setConsoleEntries, diagnostics, activeFile, contents, project, refreshFiles }: any) {
+  const [tab, setTab] = useState<'problems' | 'console' | 'tutor'>('problems')
+  const content = activeFile ? (contents[activeFile] ?? '') : ''
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
       <div class="bottom-tabs">
         <button class={tab === 'problems' ? 'active' : ''} onClick={() => setTab('problems')}>Problemas ({diagnostics.length})</button>
         <button class={tab === 'console' ? 'active' : ''} onClick={() => setTab('console')}>Console ({consoleEntries.length})</button>
+        <button class={tab === 'tutor' ? 'active' : ''} onClick={() => setTab('tutor')}>Tutor</button>
       </div>
-      <div class="panel-body" style={{ flex:1 }}>
-        {tab === 'problems' ? <ProblemsPanel diagnostics={diagnostics} /> : <ConsolePanel entries={consoleEntries} onClear={() => setConsoleEntries([])} />}
+      <div class="panel-body" style={{ flex:1, overflow:'auto' }}>
+        {tab === 'problems' && <ProblemsPanel diagnostics={diagnostics} />}
+        {tab === 'console' && <ConsolePanel entries={consoleEntries} onClear={() => setConsoleEntries([])} />}
+        {tab === 'tutor' && <TutorPanel activeFile={activeFile} content={content} project={project} onRefreshFiles={refreshFiles} />}
       </div>
     </div>
   )
@@ -244,7 +249,7 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
             PAINEL
             <button class="panel-close" onClick={() => togglePanel('bottom')} aria-label="Fechar painel">×</button>
           </header>
-          <BottomPanel consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} diagnostics={diagnostics} />
+          <BottomPanel consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} diagnostics={diagnostics} activeFile={activeFile} contents={contents} project={project} refreshFiles={() => {}} />
         </div>
       )}
     </div>

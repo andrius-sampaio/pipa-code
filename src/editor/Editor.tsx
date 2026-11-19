@@ -4,6 +4,7 @@ import { EditorState } from '@codemirror/state'
 import { keymap } from '@codemirror/view'
 import { indentWithTab } from '@codemirror/commands'
 import { createLinter } from './diagnostics'
+import { createCompletionExtension } from '../autocomplete/completion'
 
 interface EditorProps {
   value: string
@@ -34,6 +35,14 @@ export function Editor({ value, language, languageId, onChange, onSave, onDiagno
         keymap.of([indentWithTab]),
         language ? language : [],
         createLinter(languageId, (d) => onDiagnosticsRef.current?.(d)),
+        createCompletionExtension(languageId, () => {
+          const code = containerRef.current?.querySelector('.cm-content')?.textContent ?? ''
+          const ids = new Set<string>()
+          const re = /\b[a-zA-Z_][a-zA-Z0-9_]*\b/g
+          let m: RegExpExecArray | null
+          while ((m = re.exec(code))) ids.add(m[0])
+          return Array.from(ids).slice(0, 50)
+        }),
         EditorView.updateListener.of((u) => {
           if (u.docChanged) onChangeRef.current(u.state.doc.toString())
         }),
