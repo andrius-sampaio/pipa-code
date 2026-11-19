@@ -3,7 +3,7 @@ import { loadPrefs, savePrefs, type Prefs, type Theme } from '../app/preferences
 import { Explorer } from './Explorer'
 import { Editor } from '../editor/Editor'
 import { loadLanguageExtension, languageFromPath } from '../editor/languages'
-import { writeFile, findFile } from '../storage/projects'
+import { writeFile, findFile, listFiles } from '../storage/projects'
 import { Preview } from '../preview/Preview'
 import { ConsolePanel } from './ConsolePanel'
 import type { ConsoleEntry } from './ConsolePanel'
@@ -57,6 +57,18 @@ export function Layout({ project, onClose }: LayoutProps) {
   }, [prefs.theme, prefs.zoom])
 
   useEffect(() => { savePrefs(prefs) }, [prefs])
+
+  // Carregar conteúdo de todos os arquivos do projeto para o Preview funcionar sem abrir abas
+  useEffect(() => {
+    let cancelled = false
+    listFiles(project.id).then((fs) => {
+      if (cancelled) return
+      const map: Record<string, string> = {}
+      for (const f of fs) if (f.type === 'file') map[f.path] = f.content
+      setContents((prev) => ({ ...map, ...prev }))
+    })
+    return () => { cancelled = true }
+  }, [project.id])
 
   useEffect(() => {
     if (prefs.mode === 'desktop') return
