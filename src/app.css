@@ -51,10 +51,14 @@
 .preview { border-left:1px solid var(--border); }
 
 /* Resizers */
-.resizer-v { width:4px; cursor:col-resize; background:transparent; flex-shrink:0; }
+.resizer-v { width:6px; cursor:col-resize; background:transparent; flex-shrink:0; position:relative; }
+.resizer-v::after { content:'⋮'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:var(--muted); font-size:10px; opacity:.6; pointer-events:none; }
 .resizer-v:hover { background:var(--accent); }
-.resizer-h { height:4px; cursor:row-resize; background:transparent; flex-shrink:0; }
+.resizer-v:hover::after { color:#fff; opacity:1; }
+.resizer-h { height:6px; cursor:row-resize; background:transparent; flex-shrink:0; position:relative; }
+.resizer-h::after { content:'⋯'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:var(--muted); font-size:10px; opacity:.6; pointer-events:none; }
 .resizer-h:hover { background:var(--accent); }
+.resizer-h:hover::after { color:#fff; opacity:1; }
 
 /* Touch layout */
 .touch-layout { display:flex; flex-direction:column; height:100%; }

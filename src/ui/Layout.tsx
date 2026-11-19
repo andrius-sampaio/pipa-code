@@ -159,6 +159,15 @@ export function Layout({ project, onClose }: LayoutProps) {
             <option value="dark">Escuro</option>
             <option value="light">Claro</option>
             <option value="high-contrast">Alto contraste</option>
+            <option value="aura">Aura Dark</option>
+            <option value="aurora">Aurora</option>
+            <option value="astral">Astral</option>
+            <option value="omarchy-851">851</option>
+            <option value="aetheria">Aetheria</option>
+            <option value="ayaka">Ayaka</option>
+            <option value="black-arch">Black Arch</option>
+            <option value="bright-future">Bright Future</option>
+            <option value="all-hallows-eve">All Hallows Eve</option>
           </select>
           <button onClick={onClose} title="Fechar projeto">Fechar projeto</button>
         </nav>
@@ -273,8 +282,20 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
       )}
       {prefs.desktopPanels.bottom && (
         <>
-          <div class="resizer-h" style={{ gridColumn: '1 / -1' }} onMouseDown={startResize('y', setBottomH, 100, 400)} />
-          <div class="bottom-panel" style={{ gridColumn: '1 / -1', height: bottomH }}>
+          <div class="resizer-h" style={{ gridColumn: '1 / -1', gridRow: 2 }} onMouseDown={(e) => {
+            e.preventDefault()
+            const start = e.clientY
+            const initial = bottomH
+            const onMove = (ev: MouseEvent) => {
+              // arrastar para baixo aumenta o painel inferior
+              const delta = ev.clientY - start
+              setBottomH(Math.min(400, Math.max(100, initial + delta)))
+            }
+            const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+            window.addEventListener('mousemove', onMove)
+            window.addEventListener('mouseup', onUp)
+          }} />
+          <div class="bottom-panel" style={{ gridColumn: '1 / -1', gridRow: 3, height: bottomH }}>
             <header class="panel-header">
               PAINEL
               <button class="panel-close" onClick={() => togglePanel('bottom')} aria-label="Fechar painel">×</button>

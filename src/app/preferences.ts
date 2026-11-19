@@ -2,7 +2,10 @@
 
 const KEY = 'pipa-code:prefs'
 
-export type Theme = 'dark' | 'light' | 'high-contrast'
+export type Theme =
+  | 'dark' | 'light' | 'high-contrast'
+  | 'aura' | 'aurora' | 'astral' | 'omarchy-851' | 'aetheria'
+  | 'ayaka' | 'black-arch' | 'bright-future' | 'all-hallows-eve'
 export type Mode = 'desktop' | 'touch'
 
 export interface Prefs {
