@@ -3,21 +3,26 @@ import { EditorView, basicSetup } from 'codemirror'
 import { EditorState } from '@codemirror/state'
 import { keymap } from '@codemirror/view'
 import { indentWithTab } from '@codemirror/commands'
+import { createLinter } from './diagnostics'
 
 interface EditorProps {
   value: string
   language: any
+  languageId: string
   onChange: (v: string) => void
   onSave?: () => void
+  onDiagnostics?: (diags: any[]) => void
 }
 
-export function Editor({ value, language, onChange, onSave }: EditorProps) {
+export function Editor({ value, language, languageId, onChange, onSave, onDiagnostics }: EditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
   const onChangeRef = useRef(onChange)
   const onSaveRef = useRef(onSave)
+  const onDiagnosticsRef = useRef(onDiagnostics)
   onChangeRef.current = onChange
   onSaveRef.current = onSave
+  onDiagnosticsRef.current = onDiagnostics
 
   // Cria o editor uma vez
   useEffect(() => {
@@ -28,6 +33,7 @@ export function Editor({ value, language, onChange, onSave }: EditorProps) {
         basicSetup,
         keymap.of([indentWithTab]),
         language ? language : [],
+        createLinter(languageId, (d) => onDiagnosticsRef.current?.(d)),
         EditorView.updateListener.of((u) => {
           if (u.docChanged) onChangeRef.current(u.state.doc.toString())
         }),

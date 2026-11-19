@@ -33,6 +33,15 @@
 .preview-frame { flex:1; width:100%; border:none; background:#fff; }
 .auto-toggle { display:flex; align-items:center; gap:.3rem; font-size:.8rem; }
 .console-panel { display:flex; flex-direction:column; height:100%; }
+.problems-panel { display:flex; flex-direction:column; gap:.2rem; }
+.problem-item { display:flex; align-items:center; gap:.4rem; text-align:left; border:none; background:transparent; padding:.2rem; width:100%; }
+.problem-item:hover { background:var(--panel); }
+.problem-sev.error { color:var(--danger); }
+.problem-sev.warning { color:#f9e2af; }
+.problem-msg { flex:1; font-size:.85rem; }
+.bottom-tabs { display:flex; gap:.2rem; padding:.2rem; border-bottom:1px solid var(--border); }
+.bottom-tabs button { border:none; background:transparent; padding:.2rem .5rem; font-size:.8rem; }
+.bottom-tabs button.active { background:var(--panel); }
 .console-toolbar { padding:.2rem; border-bottom:1px solid var(--border); }
 .console-output { flex:1; overflow:auto; padding:.25rem; font-family:var(--font-mono); font-size:.8rem; }
 .console-line { white-space:pre-wrap; word-break:break-word; }

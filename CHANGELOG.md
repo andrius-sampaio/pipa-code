@@ -29,3 +29,8 @@
 - Captura de console e erros via postMessage.
 - Botões Executar/Parar e atualização automática (desligável).
 - Execução de JS puro em Web Worker com botão Parar.
+
+## [0.5.0] - Fase 5 (diagnósticos)
+- Diagnósticos de sintaxe via parser Lezer + regras extras (HTML, CSS, JS, JSON, Python).
+- Painel Problemas clicável e contadores na barra de status.
+- Linter integrado ao CodeMirror (sublinhado ondulado).

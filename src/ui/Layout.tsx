@@ -5,13 +5,29 @@ import { Editor } from '../editor/Editor'
 import { Preview } from '../preview/Preview'
 import { ConsolePanel } from './ConsolePanel'
 import type { ConsoleEntry } from './ConsolePanel'
-import { loadLanguageExtension } from '../editor/languages'
+import { ProblemsPanel } from './ProblemsPanel'
+import { loadLanguageExtension, languageFromPath } from '../editor/languages'
 import { writeFile, findFile } from '../storage/projects'
 import type { ProjectRecord } from '../storage/db'
 
 interface LayoutProps {
   project: ProjectRecord
   onClose: () => void
+}
+
+function BottomPanel({ consoleEntries, setConsoleEntries, diagnostics }: any) {
+  const [tab, setTab] = useState<'problems' | 'console'>('problems')
+  return (
+    <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
+      <div class="bottom-tabs">
+        <button class={tab === 'problems' ? 'active' : ''} onClick={() => setTab('problems')}>Problemas ({diagnostics.length})</button>
+        <button class={tab === 'console' ? 'active' : ''} onClick={() => setTab('console')}>Console ({consoleEntries.length})</button>
+      </div>
+      <div class="panel-body" style={{ flex:1 }}>
+        {tab === 'problems' ? <ProblemsPanel diagnostics={diagnostics} /> : <ConsolePanel entries={consoleEntries} onClear={() => setConsoleEntries([])} />}
+      </div>
+    </div>
+  )
 }
 
 export function Layout({ project, onClose }: LayoutProps) {
@@ -22,6 +38,7 @@ export function Layout({ project, onClose }: LayoutProps) {
   const [contents, setContents] = useState<Record<string, string>>({})
   const [langs, setLangs] = useState<Record<string, any>>({})
   const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([])
+  const [diagnostics, setDiagnostics] = useState<any[]>([])
   const saveTimers = useRef<Record<string, number>>({})
 
   useEffect(() => {
@@ -154,11 +171,11 @@ export function Layout({ project, onClose }: LayoutProps) {
         {prefs.mode === 'desktop' ? (
           <DesktopLayout prefs={prefs} togglePanel={togglePanel} project={project} openFiles={openFiles} activeFile={activeFile}
             contents={contents} langs={langs} onSelectFile={handleSelectFile} onCloseTab={closeTab} onActivate={setActiveFile}
-            onChange={handleChange} onSave={handleSave} onConsole={addConsole} consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} />
+            onChange={handleChange} onSave={handleSave} onConsole={addConsole} consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} onDiagnostics={(d: any[]) => setDiagnostics(d)} diagnostics={diagnostics} />
         ) : (
           <TouchLayout project={project} openFiles={openFiles} activeFile={activeFile}
             contents={contents} langs={langs} onSelectFile={handleSelectFile} onCloseTab={closeTab} onActivate={setActiveFile}
-            onChange={handleChange} onSave={handleSave} onConsole={addConsole} />
+            onChange={handleChange} onSave={handleSave} onConsole={addConsole} onDiagnostics={(d: any[]) => setDiagnostics(d)} />
         )}
       </main>
 
@@ -167,12 +184,13 @@ export function Layout({ project, onClose }: LayoutProps) {
         <span>Zoom: {Math.round(prefs.zoom * 100)}%</span>
         <span>Tema: {prefs.theme}</span>
         {activeFile && <span>Arquivo: {activeFile}</span>}
+        <span>Problemas: {diagnostics.filter((d: any) => d.severity === 'error').length} erros, {diagnostics.filter((d: any) => d.severity === 'warning').length} avisos</span>
       </footer>
     </div>
   )
 }
 
-function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, consoleEntries, setConsoleEntries }: any) {
+function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, consoleEntries, setConsoleEntries, onDiagnostics, diagnostics }: any) {
   return (
     <div class="desktop-layout">
       <aside class="activitybar">
@@ -203,7 +221,7 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
         </div>
         <div class="editor-host">
           {activeFile ? (
-            <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} />
+            <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} languageId={activeFile ? languageFromPath(activeFile) : 'javascript'} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} onDiagnostics={(d: any[]) => onDiagnostics(d)} />
           ) : (
             <div class="editor-placeholder">Abra um arquivo no explorador</div>
           )}
@@ -226,16 +244,14 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
             PAINEL
             <button class="panel-close" onClick={() => togglePanel('bottom')} aria-label="Fechar painel">×</button>
           </header>
-          <div class="panel-body">
-            <ConsolePanel entries={consoleEntries} onClear={() => setConsoleEntries([])} />
-          </div>
+          <BottomPanel consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} diagnostics={diagnostics} />
         </div>
       )}
     </div>
   )
 }
 
-function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole }: any) {
+function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, onDiagnostics }: any) {
   const [tab, setTab] = useState<'files' | 'code' | 'result' | 'tutor'>('code')
   return (
     <div class="touch-layout">
@@ -254,7 +270,7 @@ function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelect
               </div>
             )}
             {activeFile ? (
-              <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} />
+              <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} languageId={activeFile ? languageFromPath(activeFile) : 'javascript'} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} onDiagnostics={(d: any[]) => onDiagnostics(d)} />
             ) : (
               <div class="editor-placeholder">Abra um arquivo em Arquivos</div>
             )}
