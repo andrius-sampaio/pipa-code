@@ -23,3 +23,9 @@
 - Detecção de linguagem pela extensão, carregamento lazy por linguagem.
 - Atalhos: Ctrl+S salvar. Tab indenta.
 - Barra de símbolos permanece no modo Toque.
+
+## [0.4.0] - Fase 4 (preview e execução)
+- Preview HTML/CSS/JS em iframe sandbox com resolução de arquivos do projeto.
+- Captura de console e erros via postMessage.
+- Botões Executar/Parar e atualização automática (desligável).
+- Execução de JS puro em Web Worker com botão Parar.

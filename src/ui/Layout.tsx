@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'preact/hooks'
 import { loadPrefs, savePrefs, type Prefs, type Theme } from '../app/preferences'
 import { Explorer } from './Explorer'
 import { Editor } from '../editor/Editor'
+import { Preview } from '../preview/Preview'
+import { ConsolePanel } from './ConsolePanel'
+import type { ConsoleEntry } from './ConsolePanel'
 import { loadLanguageExtension } from '../editor/languages'
 import { writeFile, findFile } from '../storage/projects'
 import type { ProjectRecord } from '../storage/db'
@@ -18,6 +21,7 @@ export function Layout({ project, onClose }: LayoutProps) {
   const [activeFile, setActiveFile] = useState<string | null>(null)
   const [contents, setContents] = useState<Record<string, string>>({})
   const [langs, setLangs] = useState<Record<string, any>>({})
+  const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([])
   const saveTimers = useRef<Record<string, number>>({})
 
   useEffect(() => {
@@ -75,6 +79,7 @@ export function Layout({ project, onClose }: LayoutProps) {
   const togglePanel = (key: keyof Prefs['desktopPanels']) => {
     setPrefs((p) => ({ ...p, desktopPanels: { ...p.desktopPanels, [key]: !p.desktopPanels[key] } }))
   }
+  const addConsole = (level: string, text: string) => setConsoleEntries((prev) => [...prev, { level, text, ts: Date.now() }])
 
   const openFile = useCallback(async (path: string) => {
     if (!openFiles.includes(path)) {
@@ -149,11 +154,11 @@ export function Layout({ project, onClose }: LayoutProps) {
         {prefs.mode === 'desktop' ? (
           <DesktopLayout prefs={prefs} togglePanel={togglePanel} project={project} openFiles={openFiles} activeFile={activeFile}
             contents={contents} langs={langs} onSelectFile={handleSelectFile} onCloseTab={closeTab} onActivate={setActiveFile}
-            onChange={handleChange} onSave={handleSave} />
+            onChange={handleChange} onSave={handleSave} onConsole={addConsole} consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} />
         ) : (
           <TouchLayout project={project} openFiles={openFiles} activeFile={activeFile}
             contents={contents} langs={langs} onSelectFile={handleSelectFile} onCloseTab={closeTab} onActivate={setActiveFile}
-            onChange={handleChange} onSave={handleSave} />
+            onChange={handleChange} onSave={handleSave} onConsole={addConsole} />
         )}
       </main>
 
@@ -167,7 +172,7 @@ export function Layout({ project, onClose }: LayoutProps) {
   )
 }
 
-function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave }: any) {
+function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, consoleEntries, setConsoleEntries }: any) {
   return (
     <div class="desktop-layout">
       <aside class="activitybar">
@@ -210,7 +215,9 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
             PREVIEW
             <button class="panel-close" onClick={() => togglePanel('preview')} aria-label="Fechar preview">×</button>
           </header>
-          <div class="panel-body">Preview/Resultado (Fase 4)</div>
+          <div class="panel-body preview-body">
+            <Preview contents={contents} onConsole={onConsole} />
+          </div>
         </aside>
       )}
       {prefs.desktopPanels.bottom && (
@@ -219,14 +226,16 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
             PAINEL
             <button class="panel-close" onClick={() => togglePanel('bottom')} aria-label="Fechar painel">×</button>
           </header>
-          <div class="panel-body">Problemas · Console · Tutor (Fases 5-6)</div>
+          <div class="panel-body">
+            <ConsolePanel entries={consoleEntries} onClear={() => setConsoleEntries([])} />
+          </div>
         </div>
       )}
     </div>
   )
 }
 
-function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave }: any) {
+function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole }: any) {
   const [tab, setTab] = useState<'files' | 'code' | 'result' | 'tutor'>('code')
   return (
     <div class="touch-layout">
@@ -251,7 +260,7 @@ function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelect
             )}
           </div>
         )}
-        {tab === 'result' && <div class="panel-body">Resultado (Fase 4)</div>}
+        {tab === 'result' && <div class="panel-body"><Preview contents={contents} onConsole={onConsole} /></div>}
         {tab === 'tutor' && <div class="panel-body">Tutor (Fase 6)</div>}
       </div>
       <nav class="touch-nav">
