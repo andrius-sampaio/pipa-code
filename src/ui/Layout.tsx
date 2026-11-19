@@ -155,6 +155,13 @@ export function Layout({ project, onClose }: LayoutProps) {
           <button onClick={() => (prefs.mode === 'desktop' ? exitDesktop() : enterDesktop())}>
             {prefs.mode === 'desktop' ? 'Sair do Modo Desktop' : 'Modo Desktop'}
           </button>
+          {prefs.mode === 'desktop' && (
+            <>
+              <button class={prefs.desktopPanels.explorer ? 'active' : ''} onClick={() => togglePanel('explorer')} title="Explorador">Explorador</button>
+              <button class={prefs.desktopPanels.preview ? 'active' : ''} onClick={() => togglePanel('preview')} title="Preview">Preview</button>
+              <button class={prefs.desktopPanels.bottom ? 'active' : ''} onClick={() => togglePanel('bottom')} title="Painel">Painel</button>
+            </>
+          )}
           <select value={prefs.theme} onChange={(e) => setPrefs((p) => ({ ...p, theme: (e.target as HTMLSelectElement).value as Theme }))} aria-label="Tema">
             <option value="dark">Escuro</option>
             <option value="light">Claro</option>
@@ -210,42 +217,43 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
   const [previewW, setPreviewW] = useState(300)
   const [bottomH, setBottomH] = useState(180)
 
-  const startResize = (axis: 'x' | 'y', setter: (n: number) => void, min: number, max: number, invert = false) => (e: MouseEvent) => {
+  const dragX = (setter: (n: number) => void, min: number, max: number, invert: boolean, initial: number) => (e: MouseEvent) => {
     e.preventDefault()
-    const start = axis === 'x' ? e.clientX : e.clientY
-    const initial = invert ? (axis === 'x' ? previewW : bottomH) : (axis === 'x' ? explorerW : bottomH)
+    const start = e.clientX
     const onMove = (ev: MouseEvent) => {
-      const delta = (axis === 'x' ? ev.clientX : ev.clientY) - start
+      const delta = ev.clientX - start
       const val = invert ? initial - delta : initial + delta
       setter(Math.min(max, Math.max(min, val)))
     }
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-    }
+    const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
   }
 
+  const cols: string[] = []
+  if (prefs.desktopPanels.explorer) cols.push(`${explorerW}px`, '6px')
+  cols.push('1fr')
+  if (prefs.desktopPanels.preview) cols.push('6px', `${previewW}px`)
+  const colTemplate = cols.join(' ')
+
+  const rows: string[] = ['1fr']
+  if (prefs.desktopPanels.bottom) rows.push('6px', `${bottomH}px`)
+  const rowTemplate = rows.join(' ')
+
   return (
-    <div class="desktop-layout" style={{ gridTemplateColumns: `44px ${explorerW}px 4px 1fr ${prefs.desktopPanels.preview ? `4px ${previewW}px` : ''}`, gridTemplateRows: `1fr ${prefs.desktopPanels.bottom ? `4px ${bottomH}px` : ''}` }}>
-      <aside class="activitybar">
-        <button title="Arquivos" aria-label="Arquivos" class={prefs.desktopPanels.explorer ? 'active' : ''} onClick={() => togglePanel('explorer')}>📁</button>
-        <button title="Tutor/Painel" aria-label="Tutor" class={prefs.desktopPanels.bottom ? 'active' : ''} onClick={() => togglePanel('bottom')}>💡</button>
-        <button title="Preview" aria-label="Preview" class={prefs.desktopPanels.preview ? 'active' : ''} onClick={() => togglePanel('preview')}>⚙️</button>
-      </aside>
+    <div class="desktop-layout" style={{ gridTemplateColumns: colTemplate, gridTemplateRows: rowTemplate }}>
       {prefs.desktopPanels.explorer && (
         <>
           <aside class="panel explorer">
             <header class="panel-header">
               EXPLORADOR
-              <button class="panel-close" onClick={() => togglePanel('explorer')} aria-label="Fechar explorador">×</button>
+              <button class="panel-close" onClick={() => togglePanel('explorer')} aria-label="Minimizar explorador" title="Minimizar">−</button>
             </header>
             <div class="panel-body">
               <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} />
             </div>
           </aside>
-          <div class="resizer-v" onMouseDown={startResize('x', setExplorerW, 160, 420)} />
+          <div class="resizer-v" onMouseDown={dragX(setExplorerW, 160, 420, false, explorerW)} />
         </>
       )}
       <section class="editor-area">
@@ -268,11 +276,11 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
       </section>
       {prefs.desktopPanels.preview && (
         <>
-          <div class="resizer-v" onMouseDown={startResize('x', setPreviewW, 200, 520, true)} />
+          <div class="resizer-v" onMouseDown={dragX(setPreviewW, 200, 520, true, previewW)} />
           <aside class="panel preview">
             <header class="panel-header">
               PREVIEW
-              <button class="panel-close" onClick={() => togglePanel('preview')} aria-label="Fechar preview">×</button>
+              <button class="panel-close" onClick={() => togglePanel('preview')} aria-label="Minimizar preview" title="Minimizar">−</button>
             </header>
             <div class="panel-body preview-body">
               <Preview contents={contents} onConsole={onConsole} />
@@ -287,7 +295,6 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
             const start = e.clientY
             const initial = bottomH
             const onMove = (ev: MouseEvent) => {
-              // arrastar para baixo aumenta o painel inferior
               const delta = ev.clientY - start
               setBottomH(Math.min(400, Math.max(100, initial + delta)))
             }
@@ -298,7 +305,7 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
           <div class="bottom-panel" style={{ gridColumn: '1 / -1', gridRow: 3, height: bottomH }}>
             <header class="panel-header">
               PAINEL
-              <button class="panel-close" onClick={() => togglePanel('bottom')} aria-label="Fechar painel">×</button>
+              <button class="panel-close" onClick={() => togglePanel('bottom')} aria-label="Minimizar painel" title="Minimizar">−</button>
             </header>
             <div class="panel-body" style={{ flex:1, overflow:'auto' }}>
               <BottomPanel consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} diagnostics={diagnostics} activeFile={activeFile} contents={contents} project={project} refreshFiles={() => {}} />
@@ -331,7 +338,7 @@ function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelect
             {activeFile ? (
               <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} languageId={activeFile ? languageFromPath(activeFile) : 'javascript'} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} onDiagnostics={(d: any[]) => onDiagnostics(d)} />
             ) : (
-              <div class="editor-placeholder">Abra um arquivo em Arquivos</div>
+              <div class="editor-placeholder">Abra um arquivo no explorador</div>
             )}
           </div>
         )}
