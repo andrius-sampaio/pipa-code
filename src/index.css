@@ -43,7 +43,11 @@ body {
   font-size: calc(14px * var(--ui-scale));
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
+h1, h2, h3 { text-wrap: balance; }
+p, li { text-wrap: pretty; }
 button {
   font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--border);
   border-radius: var(--radius-sm); padding: .35rem .7rem; cursor: pointer; min-height: 34px;
