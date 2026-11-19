@@ -20,7 +20,8 @@ export class PythonRunner {
     try {
       onProgress?.('Carregando Python (Pyodide)... isso pode levar alguns segundos.')
       const mod: any = await import('pyodide')
-      this.pyodide = await mod.loadPyodide({ indexURL: '/pyodide/' })
+      const base = (import.meta as any).env?.BASE_URL ?? '/'
+      this.pyodide = await mod.loadPyodide({ indexURL: base + 'pyodide/' })
       onProgress?.('Python carregado.')
       return true
     } catch (e: any) {
