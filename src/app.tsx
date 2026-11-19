@@ -8,6 +8,7 @@ import type { ProjectRecord } from './storage/db'
 export function App() {
   const [project, setProject] = useState<ProjectRecord | null>(null)
   const [loading, setLoading] = useState(true)
+  const isFileMode = typeof window !== 'undefined' && window.location.protocol === 'file:'
 
   useEffect(() => {
     requestPersist().catch(() => {})
@@ -20,7 +21,17 @@ export function App() {
   if (loading) return <div class="placeholder">Carregando...</div>
 
   if (!project) {
-    return <Home onOpen={openProject} />
+    return (
+      <div>
+        {isFileMode && <div class="banner warn">Modo arquivo único: Python indisponível. O restante funciona normalmente.</div>}
+        <Home onOpen={openProject} />
+      </div>
+    )
   }
-  return <Layout project={project} onClose={closeProject} />
+  return (
+    <div style={{ height:'100%' }}>
+      {isFileMode && <div class="banner warn">Modo arquivo único: Python indisponível.</div>}
+      <Layout project={project} onClose={closeProject} />
+    </div>
+  )
 }

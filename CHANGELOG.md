@@ -45,3 +45,9 @@
 - Pyodide carregado sob demanda com aviso de tamanho e cache offline.
 - print/input, botao Parar, tempo maximo.
 - Arquivos Pyodide em public/pyodide/ (sem CDN).
+
+## [0.8.0] - Fase 8 (polimento e distribuicao)
+- Modo arquivo unico via vite-plugin-singlefile.
+- Testes unitarios (Vitest) para nivel, regras, estrutura, zip.
+- GUIA_HARDWARE.md e ALUNO.md.
+- README atualizado com passo a passo.

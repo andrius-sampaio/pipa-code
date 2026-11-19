@@ -3,7 +3,7 @@
 IDE web leve, offline e em português para estudantes aprenderem a programar em celulares modestos, tablets e computadores simples.
 
 ## Status
-Fase 0 (fundação) concluída. Layout e funcionalidades chegam nas próximas fases.
+Fases 0 a 8 concluídas (fundação, layout/modos, armazenamento, editor, preview/execução, diagnósticos, tutor/autocompletar, Python opcional, polimento/testes/distribuição).
 
 ## Requisitos para desenvolver/publicar
 - Node.js 20 ou superior
@@ -23,7 +23,13 @@ npm run check:size
 ```
 A pasta `dist/` contém o app pronto para publicar (ex.: GitHub Pages). O script `check:size` falha se o orçamento de desempenho for ultrapassado.
 
-## Como testar offline
+## Modo arquivo único (plano B)
+```bash
+npm run build:singlefile
+```
+Gera `dist-single/index.html` com tudo embutido, que abre de um pen drive ou do celular sem servidor. Nesse modo o Python opcional fica indisponível (aviso exibido).
+
+## Como testar offline (PWA)
 1. Rode `npm run build` e `npm run preview`.
 2. Abra o app no navegador, aguarde carregar.
 3. Desligue o Wi-Fi e recarregue a página: deve continuar funcionando.
@@ -31,8 +37,21 @@ A pasta `dist/` contém o app pronto para publicar (ex.: GitHub Pages). O script
 ## Instalação no celular (PWA)
 Abra o site publicado no Chrome, toque em "Adicionar à tela inicial" (ou "Instalar app").
 
-## Modo arquivo único (plano B)
-Será adicionado em fase posterior (vite-plugin-singlefile). Por enquanto, use o modo PWA.
+## Testes
+```bash
+npm test
+```
+
+## Publicação no GitHub Pages
+O repositório inclui workflow em `.github/workflows/deploy.yml` que faz build e deploy automático ao enviar para `main`.
+
+## Documentação
+- `DECISOES.md`: decisões técnicas e motivos.
+- `CHANGELOG.md`: histórico por fase.
+- `IDEIAS_FUTURAS.md`: fora do escopo da v1.
+- `PRIVACIDADE.md`: privacidade e segurança.
+- `GUIA_HARDWARE.md`: guia de hardware para o professor.
+- `ALUNO.md`: guia rápido do aluno (1 página).
 
 ## Licença
 MIT.

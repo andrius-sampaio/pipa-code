@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "check:size": "node scripts/check-size.mjs"
+    "check:size": "node scripts/check-size.mjs",
+    "build:singlefile": "vite build --config vite.singlefile.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",
@@ -33,9 +36,13 @@
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.6",
+    "@testing-library/preact": "^3.2.6",
     "@types/node": "^24.19.2",
+    "jsdom": "^29.1.1",
     "typescript": "~7.0.2",
     "vite": "^8.3.6",
-    "vite-plugin-pwa": "^2.0.0"
+    "vite-plugin-pwa": "^2.0.0",
+    "vite-plugin-singlefile": "^2.3.4",
+    "vitest": "^4.1.12"
   }
 }
