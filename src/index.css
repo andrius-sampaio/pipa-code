@@ -1,30 +1,35 @@
 :root {
-  --bg: #1e1e2e;
-  --fg: #cdd6f4;
-  --accent: #89b4fa;
-  --panel: #313244;
-  --border: #45475a;
-  --muted: #a6adc8;
-  --danger: #f38ba8;
-  --success: #a6e3a1;
+  --bg: #000000;
+  --fg: #ffffff;
+  --accent: #0a84ff;
+  --panel: #1c1c1e;
+  --border: #38383a;
+  --muted: #8e8e93;
+  --danger: #ff453a;
+  --success: #30d158;
+  --warning: #ffd60a;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --ui-scale: 1;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 16px rgba(0,0,0,.25);
 }
 
 [data-theme="light"] {
-  --bg: #eff1f5;
-  --fg: #4c4f69;
-  --accent: #1e66f5;
-  --panel: #e6e9ef;
-  --border: #bcc0cc;
-  --muted: #6c6f85;
+  --bg: #f2f2f7;
+  --fg: #000000;
+  --accent: #007aff;
+  --panel: #ffffff;
+  --border: #c6c6c8;
+  --muted: #8e8e93;
+  --shadow: 0 4px 16px rgba(0,0,0,.08);
 }
 
 [data-theme="high-contrast"] {
   --bg: #000000;
   --fg: #ffffff;
   --accent: #ffff00;
-  --panel: #1a1a1a;
+  --panel: #000000;
   --border: #ffffff;
   --muted: #cccccc;
 }
@@ -34,16 +39,25 @@ html, body, #app { height: 100%; margin: 0; }
 body {
   background: var(--bg);
   color: var(--fg);
-  font-family: system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   font-size: calc(14px * var(--ui-scale));
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
-button { font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: .25rem .5rem; cursor: pointer; min-height: 32px; }
-button:hover { filter: brightness(1.1); }
+button {
+  font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: .35rem .7rem; cursor: pointer; min-height: 34px;
+  transition: background .15s, transform .05s;
+}
+button:hover { filter: brightness(1.05); }
+button:active { transform: scale(.97); }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-input, select { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: .25rem .4rem; }
+input, select {
+  font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: .35rem .5rem;
+}
+select { cursor: pointer; }
 
-/* reduzir movimento */
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }

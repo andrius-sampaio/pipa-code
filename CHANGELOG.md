@@ -51,3 +51,8 @@
 - Testes unitarios (Vitest) para nivel, regras, estrutura, zip.
 - GUIA_HARDWARE.md e ALUNO.md.
 - README atualizado com passo a passo.
+
+## [0.9.0] - Melhorias de UI e redimensionamento
+- Painéis redimensionáveis no Modo Desktop (arrastar divisores).
+- Botões da barra de atividades funcionais (Arquivos, Tutor/Painel, Preview).
+- UI polida com estilo iOS (cores, blur, bordas arredondadas, sombras).

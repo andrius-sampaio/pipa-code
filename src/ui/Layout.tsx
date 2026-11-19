@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'preact/hooks'
 import { loadPrefs, savePrefs, type Prefs, type Theme } from '../app/preferences'
 import { Explorer } from './Explorer'
 import { Editor } from '../editor/Editor'
+import { loadLanguageExtension, languageFromPath } from '../editor/languages'
+import { writeFile, findFile } from '../storage/projects'
 import { Preview } from '../preview/Preview'
 import { ConsolePanel } from './ConsolePanel'
 import type { ConsoleEntry } from './ConsolePanel'
 import { ProblemsPanel } from './ProblemsPanel'
 import { TutorPanel } from './TutorPanel'
 import { PythonPanel } from './PythonPanel'
-import { loadLanguageExtension, languageFromPath } from '../editor/languages'
-import { writeFile, findFile } from '../storage/projects'
 import type { ProjectRecord } from '../storage/db'
 
 interface LayoutProps {
@@ -110,10 +110,8 @@ export function Layout({ project, onClose }: LayoutProps) {
   const openFile = useCallback(async (path: string) => {
     if (!openFiles.includes(path)) {
       setOpenFiles((prev) => [...prev, path])
-      // carregar conteúdo
       const rec = await findFile(project.id, path)
       setContents((prev) => ({ ...prev, [path]: rec?.content ?? '' }))
-      // carregar linguagem (lazy)
       if (!langs[path]) {
         const ext = await loadLanguageExtension(path)
         setLangs((prev) => ({ ...prev, [path]: ext }))
@@ -121,7 +119,6 @@ export function Layout({ project, onClose }: LayoutProps) {
     }
     setActiveFile(path)
   }, [openFiles, project.id, langs])
-
 
   const handleSelectFile = useCallback((path: string | null) => {
     if (path) openFile(path)
@@ -138,7 +135,6 @@ export function Layout({ project, onClose }: LayoutProps) {
 
   const handleChange = (path: string, value: string) => {
     setContents((prev) => ({ ...prev, [path]: value }))
-    // autosave com debounce
     if (saveTimers.current[path]) window.clearTimeout(saveTimers.current[path])
     saveTimers.current[path] = window.setTimeout(() => {
       writeFile(project.id, path, value).catch(() => {})
@@ -180,7 +176,8 @@ export function Layout({ project, onClose }: LayoutProps) {
         {prefs.mode === 'desktop' ? (
           <DesktopLayout prefs={prefs} togglePanel={togglePanel} project={project} openFiles={openFiles} activeFile={activeFile}
             contents={contents} langs={langs} onSelectFile={handleSelectFile} onCloseTab={closeTab} onActivate={setActiveFile}
-            onChange={handleChange} onSave={handleSave} onConsole={addConsole} consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} onDiagnostics={(d: any[]) => setDiagnostics(d)} diagnostics={diagnostics} />
+            onChange={handleChange} onSave={handleSave} onConsole={addConsole} consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries}
+            onDiagnostics={(d: any[]) => setDiagnostics(d)} diagnostics={diagnostics} />
         ) : (
           <TouchLayout project={project} openFiles={openFiles} activeFile={activeFile}
             contents={contents} langs={langs} onSelectFile={handleSelectFile} onCloseTab={closeTab} onActivate={setActiveFile}
@@ -200,23 +197,47 @@ export function Layout({ project, onClose }: LayoutProps) {
 }
 
 function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, consoleEntries, setConsoleEntries, onDiagnostics, diagnostics }: any) {
+  const [explorerW, setExplorerW] = useState(230)
+  const [previewW, setPreviewW] = useState(300)
+  const [bottomH, setBottomH] = useState(180)
+
+  const startResize = (axis: 'x' | 'y', setter: (n: number) => void, min: number, max: number, invert = false) => (e: MouseEvent) => {
+    e.preventDefault()
+    const start = axis === 'x' ? e.clientX : e.clientY
+    const initial = invert ? (axis === 'x' ? previewW : bottomH) : (axis === 'x' ? explorerW : bottomH)
+    const onMove = (ev: MouseEvent) => {
+      const delta = (axis === 'x' ? ev.clientX : ev.clientY) - start
+      const val = invert ? initial - delta : initial + delta
+      setter(Math.min(max, Math.max(min, val)))
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
   return (
-    <div class="desktop-layout">
+    <div class="desktop-layout" style={{ gridTemplateColumns: `44px ${explorerW}px 4px 1fr ${prefs.desktopPanels.preview ? `4px ${previewW}px` : ''}`, gridTemplateRows: `1fr ${prefs.desktopPanels.bottom ? `4px ${bottomH}px` : ''}` }}>
       <aside class="activitybar">
-        <button title="Arquivos" aria-label="Arquivos">📁</button>
-        <button title="Tutor" aria-label="Tutor">💡</button>
-        <button title="Configurações" aria-label="Configurações">⚙️</button>
+        <button title="Arquivos" aria-label="Arquivos" class={prefs.desktopPanels.explorer ? 'active' : ''} onClick={() => togglePanel('explorer')}>📁</button>
+        <button title="Tutor/Painel" aria-label="Tutor" class={prefs.desktopPanels.bottom ? 'active' : ''} onClick={() => togglePanel('bottom')}>💡</button>
+        <button title="Preview" aria-label="Preview" class={prefs.desktopPanels.preview ? 'active' : ''} onClick={() => togglePanel('preview')}>⚙️</button>
       </aside>
       {prefs.desktopPanels.explorer && (
-        <aside class="panel explorer">
-          <header class="panel-header">
-            EXPLORADOR
-            <button class="panel-close" onClick={() => togglePanel('explorer')} aria-label="Fechar explorador">×</button>
-          </header>
-          <div class="panel-body">
-            <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} />
-          </div>
-        </aside>
+        <>
+          <aside class="panel explorer">
+            <header class="panel-header">
+              EXPLORADOR
+              <button class="panel-close" onClick={() => togglePanel('explorer')} aria-label="Fechar explorador">×</button>
+            </header>
+            <div class="panel-body">
+              <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} />
+            </div>
+          </aside>
+          <div class="resizer-v" onMouseDown={startResize('x', setExplorerW, 160, 420)} />
+        </>
       )}
       <section class="editor-area">
         <div class="tabs">
@@ -237,24 +258,32 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
         </div>
       </section>
       {prefs.desktopPanels.preview && (
-        <aside class="panel preview">
-          <header class="panel-header">
-            PREVIEW
-            <button class="panel-close" onClick={() => togglePanel('preview')} aria-label="Fechar preview">×</button>
-          </header>
-          <div class="panel-body preview-body">
-            <Preview contents={contents} onConsole={onConsole} />
-          </div>
-        </aside>
+        <>
+          <div class="resizer-v" onMouseDown={startResize('x', setPreviewW, 200, 520, true)} />
+          <aside class="panel preview">
+            <header class="panel-header">
+              PREVIEW
+              <button class="panel-close" onClick={() => togglePanel('preview')} aria-label="Fechar preview">×</button>
+            </header>
+            <div class="panel-body preview-body">
+              <Preview contents={contents} onConsole={onConsole} />
+            </div>
+          </aside>
+        </>
       )}
       {prefs.desktopPanels.bottom && (
-        <div class="bottom-panel">
-          <header class="panel-header">
-            PAINEL
-            <button class="panel-close" onClick={() => togglePanel('bottom')} aria-label="Fechar painel">×</button>
-          </header>
-          <BottomPanel consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} diagnostics={diagnostics} activeFile={activeFile} contents={contents} project={project} refreshFiles={() => {}} />
-        </div>
+        <>
+          <div class="resizer-h" style={{ gridColumn: '1 / -1' }} onMouseDown={startResize('y', setBottomH, 100, 400)} />
+          <div class="bottom-panel" style={{ gridColumn: '1 / -1', height: bottomH }}>
+            <header class="panel-header">
+              PAINEL
+              <button class="panel-close" onClick={() => togglePanel('bottom')} aria-label="Fechar painel">×</button>
+            </header>
+            <div class="panel-body" style={{ flex:1, overflow:'auto' }}>
+              <BottomPanel consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} diagnostics={diagnostics} activeFile={activeFile} contents={contents} project={project} refreshFiles={() => {}} />
+            </div>
+          </div>
+        </>
       )}
     </div>
   )
@@ -286,7 +315,7 @@ function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelect
           </div>
         )}
         {tab === 'result' && <div class="panel-body"><Preview contents={contents} onConsole={onConsole} /></div>}
-        {tab === 'tutor' && <div class="panel-body">Tutor (Fase 6)</div>}
+        {tab === 'tutor' && <div class="panel-body"><TutorPanel activeFile={activeFile} content={activeFile ? (contents[activeFile] ?? '') : ''} project={project} onRefreshFiles={() => {}} /></div>}
       </div>
       <nav class="touch-nav">
         <button class={tab === 'files' ? 'active' : ''} onClick={() => setTab('files')}>Arquivos</button>
