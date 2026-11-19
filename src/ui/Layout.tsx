@@ -1,31 +1,28 @@
 import { useState, useEffect, useCallback } from 'preact/hooks'
 import { loadPrefs, savePrefs, type Prefs, type Theme } from '../app/preferences'
+import { Explorer } from './Explorer'
+import type { ProjectRecord } from '../storage/db'
 
-// Layout raiz: controla tema, modo, zoom e tela cheia.
-export function Layout() {
+interface LayoutProps {
+  project: ProjectRecord
+  onClose: () => void
+}
+
+export function Layout({ project, onClose }: LayoutProps) {
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs)
   const [showDesktopSuggest, setShowDesktopSuggest] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<string | null>(null)
 
-  // Aplica tema e zoom no <html>
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', prefs.theme === 'dark' ? '' : prefs.theme)
     if (prefs.theme === 'dark') document.documentElement.removeAttribute('data-theme')
     document.documentElement.style.setProperty('--ui-scale', String(prefs.zoom))
   }, [prefs.theme, prefs.zoom])
 
-  useEffect(() => {
-    savePrefs(prefs)
-  }, [prefs])
+  useEffect(() => { savePrefs(prefs) }, [prefs])
 
-  // Detecta fullscreen changes
-  useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement)
-    document.addEventListener('fullscreenchange', handler)
-    return () => document.removeEventListener('fullscreenchange', handler)
-  }, [])
 
-  // Detecção de teclado/mouse físico (sugestão, não impositiva)
+
   useEffect(() => {
     if (prefs.mode === 'desktop') return
     let suggested = false
@@ -33,67 +30,40 @@ export function Layout() {
       if (suggested) return
       const hasMod = e.ctrlKey || e.metaKey || e.altKey
       const navKey = ['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)
-      if (hasMod || navKey) {
-        suggested = true
-        setShowDesktopSuggest(true)
-      }
+      if (hasMod || navKey) { suggested = true; setShowDesktopSuggest(true) }
     }
     const onPointer = (e: PointerEvent) => {
       if (suggested) return
       if (e.pointerType === 'mouse' || (window.matchMedia && window.matchMedia('(pointer: fine)').matches)) {
-        suggested = true
-        setShowDesktopSuggest(true)
+        suggested = true; setShowDesktopSuggest(true)
       }
     }
     window.addEventListener('keydown', onKey)
     window.addEventListener('pointerdown', onPointer)
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('pointerdown', onPointer)
-    }
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('pointerdown', onPointer) }
   }, [prefs.mode])
 
-  // Atalhos de zoom
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey)) return
-      if (e.key === '+' || e.key === '=') {
-        e.preventDefault()
-        setPrefs((p) => ({ ...p, zoom: Math.min(1.4, Math.round((p.zoom + 0.1) * 10) / 10) }))
-      } else if (e.key === '-') {
-        e.preventDefault()
-        setPrefs((p) => ({ ...p, zoom: Math.max(0.8, Math.round((p.zoom - 0.1) * 10) / 10) }))
-      } else if (e.key === '0') {
-        e.preventDefault()
-        setPrefs((p) => ({ ...p, zoom: 1 }))
-      }
+      if (e.key === '+' || e.key === '=') { e.preventDefault(); setPrefs((p) => ({ ...p, zoom: Math.min(1.4, Math.round((p.zoom + 0.1) * 10) / 10) })) }
+      else if (e.key === '-') { e.preventDefault(); setPrefs((p) => ({ ...p, zoom: Math.max(0.8, Math.round((p.zoom - 0.1) * 10) / 10) })) }
+      else if (e.key === '0') { e.preventDefault(); setPrefs((p) => ({ ...p, zoom: 1 })) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
   const enterDesktop = useCallback(async () => {
-    try {
-      if (!document.fullscreenElement) await document.documentElement.requestFullscreen()
-    } catch {
-      // fullscreen pode ser negado (ex.: iOS) — continuar mesmo assim
-    }
-    try {
-      // @ts-ignore
-      if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape')
-    } catch {
-      // não suportado — mostrar aviso
-    }
+    try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen() } catch {}
+    try { // @ts-ignore
+      if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape') } catch {}
     setPrefs((p) => ({ ...p, mode: 'desktop' }))
     setShowDesktopSuggest(false)
   }, [])
 
   const exitDesktop = useCallback(async () => {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen()
-    } catch {
-      // ignore
-    }
+    try { if (document.fullscreenElement) await document.exitFullscreen() } catch {}
     setPrefs((p) => ({ ...p, mode: 'touch' }))
   }, [])
 
@@ -101,25 +71,21 @@ export function Layout() {
     setPrefs((p) => ({ ...p, desktopPanels: { ...p.desktopPanels, [key]: !p.desktopPanels[key] } }))
   }
 
-  const orientationLocked = isFullscreen
-
   return (
     <div class={`minicode-app mode-${prefs.mode}`}>
       <header class="topbar">
         <strong>MiniCode</strong>
+        <span class="project-name">{project.name}</span>
         <nav class="topbar-actions">
           <button onClick={() => (prefs.mode === 'desktop' ? exitDesktop() : enterDesktop())}>
             {prefs.mode === 'desktop' ? 'Sair do Modo Desktop' : 'Modo Desktop'}
           </button>
-          <select
-            value={prefs.theme}
-            onChange={(e) => setPrefs((p) => ({ ...p, theme: (e.target as HTMLSelectElement).value as Theme }))}
-            aria-label="Tema"
-          >
+          <select value={prefs.theme} onChange={(e) => setPrefs((p) => ({ ...p, theme: (e.target as HTMLSelectElement).value as Theme }))} aria-label="Tema">
             <option value="dark">Escuro</option>
             <option value="light">Claro</option>
             <option value="high-contrast">Alto contraste</option>
           </select>
+          <button onClick={onClose} title="Fechar projeto">Fechar projeto</button>
         </nav>
       </header>
 
@@ -131,15 +97,11 @@ export function Layout() {
         </div>
       )}
 
-      {!orientationLocked && prefs.mode === 'desktop' && (
-        <div class="banner warn">Gire o aparelho para a horizontal para melhor visualização.</div>
-      )}
-
       <main class="workspace">
         {prefs.mode === 'desktop' ? (
-          <DesktopLayout prefs={prefs} togglePanel={togglePanel} />
+          <DesktopLayout prefs={prefs} togglePanel={togglePanel} project={project} selectedFile={selectedFile} onSelectFile={setSelectedFile} />
         ) : (
-          <TouchLayout />
+          <TouchLayout project={project} selectedFile={selectedFile} onSelectFile={setSelectedFile} />
         )}
       </main>
 
@@ -147,12 +109,13 @@ export function Layout() {
         <span>Modo: {prefs.mode === 'desktop' ? 'Desktop' : 'Toque'}</span>
         <span>Zoom: {Math.round(prefs.zoom * 100)}%</span>
         <span>Tema: {prefs.theme}</span>
+        {selectedFile && <span>Arquivo: {selectedFile}</span>}
       </footer>
     </div>
   )
 }
 
-function DesktopLayout({ prefs, togglePanel }: { prefs: Prefs; togglePanel: (k: keyof Prefs['desktopPanels']) => void }) {
+function DesktopLayout({ prefs, togglePanel, project, selectedFile, onSelectFile }: any) {
   return (
     <div class="desktop-layout">
       <aside class="activitybar">
@@ -166,12 +129,14 @@ function DesktopLayout({ prefs, togglePanel }: { prefs: Prefs; togglePanel: (k: 
             EXPLORADOR
             <button class="panel-close" onClick={() => togglePanel('explorer')} aria-label="Fechar explorador">×</button>
           </header>
-          <div class="panel-body">Arquivos do projeto (Fase 2)</div>
+          <div class="panel-body">
+            <Explorer project={project} selectedFile={selectedFile} onSelectFile={onSelectFile} />
+          </div>
         </aside>
       )}
       <section class="editor-area">
-        <div class="tabs">aba1.html ×</div>
-        <div class="editor-placeholder">Editor (CodeMirror) — Fase 3</div>
+        <div class="tabs">{selectedFile || 'sem arquivo aberto'}</div>
+        <div class="editor-placeholder">Editor (CodeMirror) — Fase 3{selectedFile ? ` · ${selectedFile}` : ''}</div>
       </section>
       {prefs.desktopPanels.preview && (
         <aside class="panel preview">
@@ -195,13 +160,13 @@ function DesktopLayout({ prefs, togglePanel }: { prefs: Prefs; togglePanel: (k: 
   )
 }
 
-function TouchLayout() {
+function TouchLayout({ project, selectedFile, onSelectFile }: any) {
   const [tab, setTab] = useState<'files' | 'code' | 'result' | 'tutor'>('code')
   return (
     <div class="touch-layout">
       <div class="touch-content">
-        {tab === 'files' && <div class="panel-body">Arquivos (Fase 2)</div>}
-        {tab === 'code' && <div class="editor-placeholder">Editor (Fase 3)</div>}
+        {tab === 'files' && <Explorer project={project} selectedFile={selectedFile} onSelectFile={onSelectFile} />}
+        {tab === 'code' && <div class="editor-placeholder">Editor (Fase 3){selectedFile ? ` · ${selectedFile}` : ''}</div>}
         {tab === 'result' && <div class="panel-body">Resultado (Fase 4)</div>}
         {tab === 'tutor' && <div class="panel-body">Tutor (Fase 6)</div>}
       </div>

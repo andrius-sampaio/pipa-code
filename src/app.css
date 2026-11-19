@@ -41,3 +41,38 @@
 
 /* Evitar rolagem horizontal indevida */
 .minicode-app { overflow:hidden; }
+
+/* Home */
+.home { max-width: 720px; margin: 0 auto; padding: 1rem; overflow:auto; height:100%; }
+.home-header h1 { color: var(--accent); margin: 0; }
+.home-section { margin-top: 1rem; }
+.home-actions { display:flex; gap:.4rem; flex-wrap:wrap; margin-top:.5rem; }
+.home-card { background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:.8rem; margin-top:1rem; }
+.home-card label { display:block; margin:.4rem 0; }
+.home-card input, .home-card select { width:100%; margin-top:.2rem; }
+.project-list { list-style:none; padding:0; margin:0; }
+.project-list li { display:flex; align-items:center; gap:.4rem; padding:.4rem 0; border-bottom:1px solid var(--border); }
+.project-item { flex:1; display:flex; flex-direction:column; align-items:flex-start; border:none; background:transparent; padding:.2rem; }
+.project-item:hover { background:var(--panel); }
+.danger { color:var(--danger); }
+.muted { color:var(--muted); font-size:.85rem; }
+.import-label { cursor:pointer; }
+
+/* Explorer */
+.explorer { display:flex; flex-direction:column; height:100%; }
+.explorer-toolbar { display:flex; gap:.25rem; padding:.25rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.explorer-toolbar button, .icon-btn { min-height:28px; min-width:28px; padding:.15rem .35rem; font-size:.8rem; }
+.icon-btn { display:inline-flex; align-items:center; justify-content:center; }
+.create-row { display:flex; gap:.25rem; padding:.25rem; }
+.create-row input { flex:1; }
+.tree { flex:1; overflow:auto; padding:.25rem 0; }
+.tree-item { display:flex; align-items:center; gap:.3rem; padding:.2rem .3rem; cursor:pointer; border-radius:3px; font-size:.85rem; }
+.tree-item:hover { background:var(--panel); }
+.tree-item.selected { background:var(--accent); color:var(--bg); }
+.tree-icon { font-size:.9rem; }
+.ctx-menu { position:fixed; background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:.25rem; display:flex; flex-direction:column; gap:.15rem; z-index:1000; box-shadow:0 4px 12px rgba(0,0,0,.3); }
+.ctx-menu button { text-align:left; border:none; background:transparent; padding:.3rem .5rem; }
+.ctx-menu button:hover { background:var(--bg); }
+.ctx-menu button.danger { color:var(--danger); }
+
+.project-name { color:var(--muted); font-size:.85rem; margin-left:.5rem; }
