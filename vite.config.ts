@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.svg', 'offline.html', 'icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
-        name: 'MiniCode — IDE Educacional',
-        short_name: 'MiniCode',
+        name: 'Pipa Code — IDE Educacional',
+        short_name: 'Pipa Code',
         description: 'IDE web leve, offline, em português para aprender a programar.',
         theme_color: '#1e1e2e',
         background_color: '#1e1e2e',

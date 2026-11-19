@@ -13,9 +13,9 @@ export function TutorPanel({ activeFile, content, project, onRefreshFiles }: { a
 
   useEffect(() => {
     try {
-      const m = localStorage.getItem('minicode:modo') || 'aprendizado'
+      const m = localStorage.getItem('pipa-code:modo') || 'aprendizado'
       setModo(m as any)
-      setSilenciado(localStorage.getItem('minicode:tutor-silenciado') === '1')
+      setSilenciado(localStorage.getItem('pipa-code:tutor-silenciado') === '1')
     } catch {}
   }, [])
 
@@ -50,7 +50,7 @@ export function TutorPanel({ activeFile, content, project, onRefreshFiles }: { a
     return (
       <div class="tutor-panel">
         <p class="muted">Tutor silenciado.</p>
-        <button onClick={() => { setSilenciado(false); localStorage.setItem('minicode:tutor-silenciado', '0') }}>Reativar</button>
+        <button onClick={() => { setSilenciado(false); localStorage.setItem('pipa-code:tutor-silenciado', '0') }}>Reativar</button>
       </div>
     )
   }
@@ -66,12 +66,12 @@ export function TutorPanel({ activeFile, content, project, onRefreshFiles }: { a
           </select>
         </label>
         <label>Modo:
-          <select value={modo} onChange={(e) => { const m = (e.target as HTMLSelectElement).value as any; setModo(m); localStorage.setItem('minicode:modo', m) }}>
+          <select value={modo} onChange={(e) => { const m = (e.target as HTMLSelectElement).value as any; setModo(m); localStorage.setItem('pipa-code:modo', m) }}>
             <option value="aprendizado">Aprendizado</option>
             <option value="produtividade">Produtividade</option>
           </select>
         </label>
-        <button onClick={() => { setSilenciado(true); localStorage.setItem('minicode:tutor-silenciado', '1') }}>Silenciar tutor</button>
+        <button onClick={() => { setSilenciado(true); localStorage.setItem('pipa-code:tutor-silenciado', '1') }}>Silenciar tutor</button>
       </div>
       {nivel && <p class="muted">Nível detectado: {rotuloNivel(detectarNivel(content))}</p>}
       {sug && (

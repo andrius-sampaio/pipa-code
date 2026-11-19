@@ -1,6 +1,6 @@
 // Preferências do aluno (salvas no localStorage). Chaves simples para a Fase 1.
 
-const KEY = 'minicode:prefs'
+const KEY = 'pipa-code:prefs'
 
 export type Theme = 'dark' | 'light' | 'high-contrast'
 export type Mode = 'desktop' | 'touch'

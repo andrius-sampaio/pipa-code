@@ -67,7 +67,7 @@ export function Home({ onOpen }: HomeProps) {
   return (
     <div class="home">
       <header class="home-header">
-        <h1>MiniCode</h1>
+        <h1>Pipa Code</h1>
         <p>IDE educacional web, offline. Escolha um projeto ou crie um novo.</p>
       </header>
 

@@ -73,7 +73,7 @@ btn.addEventListener('click', () => {
     files: [
       {
         path: 'main.js',
-        content: `// JavaScript básico - MiniCode
+        content: `// JavaScript básico - Pipa Code
 // Variáveis
 const nome = 'Ana';
 let idade = 15;
@@ -101,7 +101,7 @@ for (let i = 1; i <= 5; i++) {
     files: [
       {
         path: 'main.py',
-        content: `# Python básico - MiniCode
+        content: `# Python básico - Pipa Code
 # Variáveis
 nome = "Ana"
 idade = 15

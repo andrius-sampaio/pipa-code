@@ -1,6 +1,6 @@
 # Guia rápido do aluno (1 página)
 
-1. Abra o MiniCode no navegador e toque em "Adicionar à tela inicial" para instalar.
+1. Abra o Pipa Code no navegador e toque em "Adicionar à tela inicial" para instalar.
 2. Toque em "Novo projeto" e escolha um modelo (ex.: "Página HTML").
 3. No modo Toque, use a barra de símbolos acima do teclado para inserir caracteres difíceis.
 4. Toque em "Código" para editar, "Resultado" para ver o preview.

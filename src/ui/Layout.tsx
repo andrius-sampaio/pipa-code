@@ -151,9 +151,9 @@ export function Layout({ project, onClose }: LayoutProps) {
   }
 
   return (
-    <div class={`minicode-app mode-${prefs.mode}`}>
+    <div class={`pipa-code-app mode-${prefs.mode}`}>
       <header class="topbar">
-        <strong>MiniCode</strong>
+        <strong>Pipa Code</strong>
         <span class="project-name">{project.name}</span>
         <nav class="topbar-actions">
           <button onClick={() => (prefs.mode === 'desktop' ? exitDesktop() : enterDesktop())}>

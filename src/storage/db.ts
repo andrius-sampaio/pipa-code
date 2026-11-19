@@ -18,16 +18,16 @@ export interface FileRecord {
   updatedAt: number
 }
 
-interface MiniCodeDB extends DBSchema {
+interface PipaCodeDB extends DBSchema {
   projects: { key: string; value: ProjectRecord; indexes: { 'by-updated': number } }
   files: { key: string; value: FileRecord; indexes: { 'by-project': string; 'by-path': string } }
 }
 
-let dbPromise: Promise<IDBPDatabase<MiniCodeDB>> | null = null
+let dbPromise: Promise<IDBPDatabase<PipaCodeDB>> | null = null
 
 export function getDB() {
   if (!dbPromise) {
-    dbPromise = openDB<MiniCodeDB>('minicode', 1, {
+    dbPromise = openDB<PipaCodeDB>('pipa-code', 1, {
       upgrade(db) {
         const p = db.createObjectStore('projects', { keyPath: 'id' })
         p.createIndex('by-updated', 'updatedAt')

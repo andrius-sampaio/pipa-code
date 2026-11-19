@@ -1,4 +1,4 @@
-# MiniCode — IDE Educacional Web Offline
+# Pipa Code — IDE Educacional Web Offline
 
 IDE web leve, offline e em português para estudantes aprenderem a programar em celulares modestos, tablets e computadores simples.
 

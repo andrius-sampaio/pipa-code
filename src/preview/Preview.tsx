@@ -38,11 +38,11 @@ function buildSrcdoc(files: Record<string, string>): string {
   // injetar captura de console
   const capture = `<script>
 (function(){
-  function send(level, args){ try { parent.postMessage({__minicode:true, type:'console', level:level, text: Array.from(args).map(function(x){ try { return typeof x==='object' ? JSON.stringify(x) : String(x) } catch(e){ return String(x) } }).join(' ') }, '*'); } catch(e){}
+  function send(level, args){ try { parent.postMessage({__pipacode:true, type:'console', level:level, text: Array.from(args).map(function(x){ try { return typeof x==='object' ? JSON.stringify(x) : String(x) } catch(e){ return String(x) } }).join(' ') }, '*'); } catch(e){}
   }
   const c = console;
   ['log','info','warn','error'].forEach(function(l){ const orig = c[l].bind(c); c[l] = function(){ send(l, arguments); orig.apply(c, arguments); }; });
-  window.addEventListener('error', function(e){ try { parent.postMessage({__minicode:true, type:'error', message: e.message, line: e.lineno, col: e.colno }, '*'); } catch(err){} });
+  window.addEventListener('error', function(e){ try { parent.postMessage({__pipacode:true, type:'error', message: e.message, line: e.lineno, col: e.colno }, '*'); } catch(err){} });
 })();
 </script>`
 
@@ -73,7 +73,7 @@ export function Preview({ contents, onConsole }: PreviewProps) {
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       const d = e.data
-      if (!d || !d.__minicode) return
+      if (!d || !d.__pipacode) return
       if (d.type === 'console') onConsole(d.level, d.text)
       else if (d.type === 'error') onConsole('error', `${d.message} (linha ${d.line})`)
     }

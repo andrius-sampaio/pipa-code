@@ -1,4 +1,4 @@
-.minicode-app { display:flex; flex-direction:column; height:100%; }
+.pipa-code-app { display:flex; flex-direction:column; height:100%; }
 .topbar { display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.4rem .6rem; background:var(--panel); border-bottom:1px solid var(--border); flex-wrap:wrap; }
 .topbar-actions { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
 .topbar strong { color:var(--accent); }
@@ -66,7 +66,7 @@
 }
 
 /* Evitar rolagem horizontal indevida */
-.minicode-app { overflow:hidden; }
+.pipa-code-app { overflow:hidden; }
 
 /* Home */
 .home { max-width: 720px; margin: 0 auto; padding: 1rem; overflow:auto; height:100%; }

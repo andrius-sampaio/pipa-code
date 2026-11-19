@@ -1,4 +1,4 @@
-# DECISOES.md — Decisões técnicas do MiniCode
+# DECISOES.md — Decisões técnicas do Pipa Code
 
 Este arquivo registra decisões importantes e o motivo. Formato: data, decisão, motivo.
 
@@ -12,8 +12,8 @@ Este arquivo registra decisões importantes e o motivo. Formato: data, decisão,
 - **Decisão:** TypeScript em vez de JavaScript puro com JSDoc.
 - **Motivo:** autocompletar e segurança de tipos ajudam a manter o projeto; a complexidade é aceitável. O professor pode editar arquivos .ts simples.
 
-### 3. Nome do projeto: MiniCode (provisório)
-- **Decisão:** manter "MiniCode" até validação com a turma.
+### 3. Nome do projeto: Pipa Code
+- **Decisão:** manter "Pipa Code" até validação com a turma.
 
 ### 4. PWA: vite-plugin-pwa
 - **Decisão:** usar vite-plugin-pwa (workbox) para Service Worker e manifest.
