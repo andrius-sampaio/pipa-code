@@ -65,13 +65,13 @@ select { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
-/* Temas Omarchy */
-[data-theme="aura"] { --bg:#15141b; --fg:#edecee; --accent:#a277ff; --panel:#2d2b38; --border:#4d466e; --muted:#525156; --shadow:0 4px 16px rgba(0,0,0,.35); }
-[data-theme="aurora"] { --bg:#140F1F; --fg:#DFEDE5; --accent:#59C98D; --panel:#2A2340; --border:#2A4A3E; --muted:#544E6B; }
-[data-theme="astral"] { --bg:#121212; --fg:#ffffff; --accent:#6a74f2; --panel:#2a2a2a; --border:#303050; --muted:#9e9e9e; }
-[data-theme="omarchy-851"] { --bg:#0D122F; --fg:#FCF5D6; --accent:#757fbd; --panel:#252a44; --border:#606268; --muted:#606268; }
-[data-theme="aetheria"] { --bg:#0e091d; --fg:#14B9B5; --accent:#BE3F50; --panel:#1a1230; --border:#c53253; --muted:#6C032C; }
-[data-theme="ayaka"] { --bg:#000000; --fg:#e6e6e6; --accent:#6699ff; --panel:#1a1a1a; --border:#404040; --muted:#808080; }
-[data-theme="black-arch"] { --bg:#000000; --fg:#D4D4D4; --accent:#989898; --panel:#262626; --border:#585858; --muted:#8E8E8E; }
-[data-theme="bright-future"] { --bg:#131637; --fg:#d9cfe8; --accent:#ff4fd1; --panel:#1e2350; --border:#414780; --muted:#6b74a8; }
-[data-theme="all-hallows-eve"] { --bg:#1a1a1a; --fg:#e6e6e6; --accent:#ff6b35; --panel:#2a2a2a; --border:#444444; --muted:#888888; }
+/* Temas Omarchy (ajustados para contraste e coesão) */
+[data-theme="aura"] { --bg:#15141b; --fg:#edecee; --accent:#a277ff; --panel:#211f2a; --border:#3a3747; --muted:#8a8894; --shadow:0 4px 16px rgba(0,0,0,.35); }
+[data-theme="aurora"] { --bg:#140F1F; --fg:#DFEDE5; --accent:#59C98D; --panel:#1f1a2e; --border:#3a3350; --muted:#8fa89a; }
+[data-theme="astral"] { --bg:#121212; --fg:#f0f0f0; --accent:#7a84ff; --panel:#1e1e1e; --border:#333333; --muted:#9a9a9a; }
+[data-theme="omarchy-851"] { --bg:#0D122F; --fg:#FCF5D6; --accent:#9aa3e0; --panel:#161b3d; --border:#2e3358; --muted:#9a9bb0; }
+[data-theme="aetheria"] { --bg:#0e091d; --fg:#e8f0ee; --accent:#e05a6a; --panel:#181230; --border:#2e2548; --muted:#9a94a8; }
+[data-theme="ayaka"] { --bg:#0a0a0a; --fg:#e6e6e6; --accent:#7aa8ff; --panel:#161616; --border:#2e2e2e; --muted:#8a8a8a; }
+[data-theme="black-arch"] { --bg:#000000; --fg:#e0e0e0; --accent:#b0b0b0; --panel:#141414; --border:#2e2e2e; --muted:#8a8a8a; }
+[data-theme="bright-future"] { --bg:#131637; --fg:#e8e0f0; --accent:#ff6fd8; --panel:#1c2048; --border:#333860; --muted:#8a8fa8; }
+[data-theme="all-hallows-eve"] { --bg:#1a1a1a; --fg:#e6e6e6; --accent:#ff8a50; --panel:#262626; --border:#3a3a3a; --muted:#9a9a9a; }
