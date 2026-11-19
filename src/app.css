@@ -23,6 +23,12 @@
 
 /* Desktop layout */
 .desktop-layout { display:flex; flex-direction:row; height:100%; gap:0; position:relative; overflow:hidden; align-items:stretch; }
+.col-wrap { flex: 0 0 auto; overflow: hidden; transition: width .2s ease; }
+.panel-strip { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .4rem .2rem; cursor: pointer; font-size: .75rem; color: var(--muted); transition: background .15s, color .15s; }
+.panel-strip:hover { background: var(--accent); color: #fff; }
+.panel-strip-vertical { writing-mode: vertical-rl; text-orientation: mixed; min-width: 24px; align-self: stretch; }
+.panel-strip-bottom { position: absolute; bottom: 0; left: 0; right: 0; height: 24px; border: none; border-top: 1px solid var(--border); border-radius: 0; text-align: center; }
+.desktop-col { display:flex; }
 .bottom-collapse { display:flex; flex-direction:column; width:100%; }
 .activitybar {
   display:flex; flex-direction:column; gap:.35rem; padding:.4rem .3rem;

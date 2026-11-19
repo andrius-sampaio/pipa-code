@@ -223,6 +223,8 @@ export function Layout({ project, onClose }: LayoutProps) {
   )
 }
 
+// Colapso tipo sanfona: um wrapper com overflow:hidden anima a largura/altura até 0,
+// enquanto o painel interno mantém largura/altura FIXA (não reflui, não sobrepõe).
 function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, consoleEntries, setConsoleEntries, onDiagnostics, diagnostics }: any) {
   const [explorerW, setExplorerW] = useState(230)
   const [previewW, setPreviewW] = useState(300)
@@ -241,47 +243,52 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
     window.addEventListener('mouseup', onUp)
   }
 
-  // Colapso "sanfona": painel minimizado vira strip fina com botão de restaurar
   return (
-    <div class="desktop-layout">
-      {prefs.desktopPanels.explorer ? (
-        <aside class="panel explorer" style={{ width: explorerW, flexShrink: 0 }}>
-          <header class="panel-header">
-            EXPLORADOR
-            <button class="panel-close" onClick={() => togglePanel('explorer')} aria-label="Recolher explorador" title="Recolher">−</button>
-          </header>
-          <div class="panel-body">
-            <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} />
+    <div class="desktop-layout" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {/* Linha superior: explorador + editor + preview */}
+      <div style={{ display: 'flex', flexDirection: 'row', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        {/* Explorador */}
+        <div class="col-wrap" style={{ width: prefs.desktopPanels.explorer ? explorerW + 'px' : '0px' }}>
+          <aside class="panel explorer" style={{ width: explorerW + 'px', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <header class="panel-header">
+              EXPLORADOR
+              <button class="panel-close" onClick={() => togglePanel('explorer')} aria-label="Recolher explorador" title="Recolher">−</button>
+            </header>
+            <div class="panel-body">
+              <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} />
+            </div>
+          </aside>
+        </div>
+        {prefs.desktopPanels.explorer && (
+          <div class="resizer-v" onMouseDown={dragX(setExplorerW, 160, 420, false, explorerW)} />
+        )}
+
+        {/* Editor */}
+        <section class="editor-area" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div class="tabs">
+            {openFiles.length === 0 && <span class="muted">Nenhum arquivo aberto</span>}
+            {openFiles.map((p: string) => (
+              <button key={p} class={`tab ${activeFile === p ? 'active' : ''}`} onClick={() => onActivate(p)}>
+                {p.split('/').pop()}
+                <span class="tab-close" onClick={(e) => { e.stopPropagation(); onCloseTab(p) }}>×</span>
+              </button>
+            ))}
           </div>
-        </aside>
-      ) : (
-        <button class="panel-strip panel-strip-vertical" onClick={() => togglePanel('explorer')} title="Restaurar explorador">Explorador ▸</button>
-      )}
-      {prefs.desktopPanels.explorer && (
-        <div class="resizer-v" onMouseDown={dragX(setExplorerW, 160, 420, false, explorerW)} />
-      )}
-      <section class="editor-area" style={{ flex: 1, minWidth: 0 }}>
-        <div class="tabs">
-          {openFiles.length === 0 && <span class="muted">Nenhum arquivo aberto</span>}
-          {openFiles.map((p: string) => (
-            <button key={p} class={`tab ${activeFile === p ? 'active' : ''}`} onClick={() => onActivate(p)}>
-              {p.split('/').pop()}
-              <span class="tab-close" onClick={(e) => { e.stopPropagation(); onCloseTab(p) }}>×</span>
-            </button>
-          ))}
-        </div>
-        <div class="editor-host">
-          {activeFile ? (
-            <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} languageId={activeFile ? languageFromPath(activeFile) : 'javascript'} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} onDiagnostics={(d: any[]) => onDiagnostics(d)} />
-          ) : (
-            <div class="editor-placeholder">Abra um arquivo no explorador</div>
-          )}
-        </div>
-      </section>
-      {prefs.desktopPanels.preview ? (
-        <>
+          <div class="editor-host">
+            {activeFile ? (
+              <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} languageId={activeFile ? languageFromPath(activeFile) : 'javascript'} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} onDiagnostics={(d: any[]) => onDiagnostics(d)} />
+            ) : (
+              <div class="editor-placeholder">Abra um arquivo no explorador</div>
+            )}
+          </div>
+        </section>
+
+        {/* Preview */}
+        {prefs.desktopPanels.preview && (
           <div class="resizer-v" onMouseDown={dragX(setPreviewW, 200, 520, true, previewW)} />
-          <aside class="panel preview" style={{ width: previewW, flexShrink: 0 }}>
+        )}
+        <div class="col-wrap" style={{ width: prefs.desktopPanels.preview ? previewW + 'px' : '0px' }}>
+          <aside class="panel preview" style={{ width: previewW + 'px', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <header class="panel-header">
               PREVIEW
               <button class="panel-close" onClick={() => togglePanel('preview')} aria-label="Recolher preview" title="Recolher">−</button>
@@ -290,37 +297,37 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
               <Preview contents={contents} onConsole={onConsole} />
             </div>
           </aside>
-        </>
-      ) : (
-        <button class="panel-strip panel-strip-vertical" onClick={() => togglePanel('preview')} title="Restaurar preview">Preview ◂</button>
-      )}
-      {prefs.desktopPanels.bottom ? (
-        <div class="bottom-collapse">
-          <div class="resizer-h" onMouseDown={(e) => {
-            e.preventDefault()
-            const start = e.clientY
-            const initial = bottomH
-            const onMove = (ev: MouseEvent) => {
-              const delta = ev.clientY - start
-              setBottomH(Math.min(400, Math.max(100, initial + delta)))
-            }
-            const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
-            window.addEventListener('mousemove', onMove)
-            window.addEventListener('mouseup', onUp)
-          }} />
-          <div class="bottom-panel" style={{ height: bottomH }}>
-            <header class="panel-header">
-              PAINEL
-              <button class="panel-close" onClick={() => togglePanel('bottom')} aria-label="Recolher painel" title="Recolher">−</button>
-            </header>
-            <div class="panel-body" style={{ flex:1, overflow:'auto' }}>
-              <BottomPanel consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} diagnostics={diagnostics} activeFile={activeFile} contents={contents} project={project} refreshFiles={() => {}} />
-            </div>
-          </div>
         </div>
-      ) : (
-        <button class="panel-strip panel-strip-bottom" onClick={() => togglePanel('bottom')} title="Restaurar painel">Painel ▴</button>
-      )}
+      </div>
+
+      {/* Painel inferior */}
+      <div style={{ height: prefs.desktopPanels.bottom ? bottomH + 'px' : '0px', overflow: 'hidden', transition: 'height .2s ease', flexShrink: 0, display: 'flex', flexDirection: 'column', borderTop: prefs.desktopPanels.bottom ? '1px solid var(--border)' : 'none' }}>
+        {prefs.desktopPanels.bottom && (
+          <>
+            <div class="resizer-h" style={{ height: '6px', cursor: 'row-resize', flexShrink: 0 }} onMouseDown={(e) => {
+              e.preventDefault()
+              const start = e.clientY
+              const initial = bottomH
+              const onMove = (ev: MouseEvent) => {
+                const delta = ev.clientY - start
+                setBottomH(Math.min(400, Math.max(100, initial + delta)))
+              }
+              const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+              window.addEventListener('mousemove', onMove)
+              window.addEventListener('mouseup', onUp)
+            }} />
+            <div class="bottom-panel" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <header class="panel-header">
+                PAINEL
+                <button class="panel-close" onClick={() => togglePanel('bottom')} aria-label="Recolher painel" title="Recolher">−</button>
+              </header>
+              <div class="panel-body" style={{ flex:1, overflow:'auto' }}>
+                <BottomPanel consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} diagnostics={diagnostics} activeFile={activeFile} contents={contents} project={project} refreshFiles={() => {}} />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }
