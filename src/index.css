@@ -39,7 +39,7 @@ html, body, #app { height: 100%; margin: 0; }
 body {
   background: var(--bg);
   color: var(--fg);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   font-size: calc(14px * var(--ui-scale));
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
