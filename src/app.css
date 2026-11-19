@@ -134,5 +134,8 @@
 .python-toolbar { display:flex; gap:.4rem; flex-wrap:wrap; align-items:center; }
 
 .pipa-code-app { overflow:hidden; }
+.panel-strip { writing-mode: vertical-rl; text-orientation: mixed; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .4rem .2rem; cursor: pointer; font-size: .75rem; color: var(--muted); transition: background .15s, color .15s; min-width: 24px; }
+.panel-strip:hover { background: var(--accent); color: #fff; }
+.panel-strip-bottom { writing-mode: horizontal-tb; min-width: unset; min-height: 24px; width: 100%; text-align: center; }
 img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 [data-theme="dark"] img, [data-theme="aura"] img { outline-color: oklch(1 0 0 / 0.1); }

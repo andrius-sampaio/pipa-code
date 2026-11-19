@@ -242,12 +242,12 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
 
   return (
     <div class="desktop-layout" style={{ gridTemplateColumns: colTemplate, gridTemplateRows: rowTemplate }}>
-      {prefs.desktopPanels.explorer && (
+      {prefs.desktopPanels.explorer ? (
         <>
           <aside class="panel explorer">
             <header class="panel-header">
               EXPLORADOR
-              <button class="panel-close" onClick={() => togglePanel('explorer')} aria-label="Minimizar explorador" title="Minimizar">−</button>
+              <button class="panel-close" onClick={() => togglePanel('explorer')} aria-label="Minimizar explorador" title="Minimizar painel">−</button>
             </header>
             <div class="panel-body">
               <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} />
@@ -255,6 +255,8 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
           </aside>
           <div class="resizer-v" onMouseDown={dragX(setExplorerW, 160, 420, false, explorerW)} />
         </>
+      ) : (
+        <button class="panel-strip" onClick={() => togglePanel('explorer')} title="Restaurar explorador">Explorador ▸</button>
       )}
       <section class="editor-area">
         <div class="tabs">
@@ -274,7 +276,7 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
           )}
         </div>
       </section>
-      {prefs.desktopPanels.preview && (
+      {prefs.desktopPanels.preview ? (
         <>
           <div class="resizer-v" onMouseDown={dragX(setPreviewW, 200, 520, true, previewW)} />
           <aside class="panel preview">
@@ -287,8 +289,10 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
             </div>
           </aside>
         </>
+      ) : (
+        <button class="panel-strip" onClick={() => togglePanel('preview')} title="Restaurar preview">Preview ◂</button>
       )}
-      {prefs.desktopPanels.bottom && (
+      {prefs.desktopPanels.bottom ? (
         <>
           <div class="resizer-h" style={{ gridColumn: '1 / -1', gridRow: 2 }} onMouseDown={(e) => {
             e.preventDefault()
@@ -312,6 +316,8 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
             </div>
           </div>
         </>
+      ) : (
+        <button class="panel-strip panel-strip-bottom" onClick={() => togglePanel('bottom')} title="Restaurar painel">Painel ▴</button>
       )}
     </div>
   )
