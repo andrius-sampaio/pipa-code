@@ -4,6 +4,7 @@ import { undo, redo } from '@codemirror/commands'
 import { loadPrefs, savePrefs, type Prefs, type Theme } from '../app/preferences'
 import { Explorer } from './Explorer'
 import { Editor, pasteIntoView } from '../editor/Editor'
+import { QuickSwitcher } from './QuickSwitcher'
 import { loadLanguageExtension, languageFromPath } from '../editor/languages'
 import { writeFile, findFile, listFiles, touchProject } from '../storage/projects'
 import { Preview } from '../preview/Preview'
@@ -35,6 +36,7 @@ interface WorkspaceProps {
   onDiagnostics: (diags: Diagnostic[]) => void
   onEditorReady: (view: EditorView) => void
   onExternalWrite: (path: string, content: string) => void
+  onOpenSwitcher: () => void
   refreshFiles: () => void
   filesVersion: number
 }
@@ -81,8 +83,13 @@ export function Layout({ project, onClose }: LayoutProps) {
   const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([])
   const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([])
   const [filesVersion, setFilesVersion] = useState(0)
+  const [switcherOpen, setSwitcherOpen] = useState(false)
   const saveTimers = useRef<Record<string, number>>({})
   const editorViewRef = useRef<EditorView | null>(null)
+  const openFilesRef = useRef<string[]>([])
+  const activeFileRef = useRef<string | null>(null)
+  openFilesRef.current = openFiles
+  activeFileRef.current = activeFile
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', prefs.theme === 'dark' ? '' : prefs.theme)
@@ -141,6 +148,32 @@ export function Layout({ project, onClose }: LayoutProps) {
 
   const refreshFiles = useCallback(() => setFilesVersion((v) => v + 1), [])
   const handleEditorReady = useCallback((view: EditorView) => { editorViewRef.current = view }, [])
+  const openSwitcher = useCallback(() => setSwitcherOpen(true), [])
+  const closeSwitcher = useCallback(() => setSwitcherOpen(false), [])
+
+  // Atalhos globais de navegação entre arquivos (Ctrl+P, Ctrl+Tab).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return
+      if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault()
+        setSwitcherOpen((o) => !o)
+        return
+      }
+      if (e.key === 'Tab') {
+        const files = openFilesRef.current
+        if (!files.length) return
+        e.preventDefault()
+        const idx = files.indexOf(activeFileRef.current ?? '')
+        const next = e.shiftKey
+          ? (idx <= 0 ? files.length - 1 : idx - 1)
+          : (idx + 1) % files.length
+        setActiveFile(files[next])
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // Atualização externa de arquivos (ex.: tutor "Separar para mim"):
   // descarta saves pendentes do arquivo e atualiza o conteúdo em memória.
@@ -225,6 +258,7 @@ export function Layout({ project, onClose }: LayoutProps) {
     onChange: handleChange, onSave: handleSave, onConsole: addConsole,
     onDiagnostics: (d: Diagnostic[]) => setDiagnostics(d),
     onEditorReady: handleEditorReady, onExternalWrite: handleExternalWrite,
+    onOpenSwitcher: openSwitcher,
     refreshFiles, filesVersion,
   }
   return (
@@ -286,6 +320,15 @@ export function Layout({ project, onClose }: LayoutProps) {
         {activeFile && <span>Arquivo: {activeFile}</span>}
         <span>Problemas: {diagnostics.filter((d) => d.severity === 'error').length} erros, {diagnostics.filter((d) => d.severity === 'warning').length} avisos</span>
       </footer>
+
+      {switcherOpen && (
+        <QuickSwitcher
+          files={Object.keys(contents).sort()}
+          activePath={activeFile}
+          onSelect={(p) => openFile(p)}
+          onClose={closeSwitcher}
+        />
+      )}
     </div>
   )
 }
@@ -300,7 +343,7 @@ function DesktopLayout(props: WorkspaceProps & {
   diagnostics: Diagnostic[]
   onJump: (d: Diagnostic) => void
 }) {
-  const { prefs, togglePanel, project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, onDiagnostics, onEditorReady, onExternalWrite, refreshFiles, filesVersion, consoleEntries, setConsoleEntries, diagnostics, onJump } = props
+  const { prefs, togglePanel, project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, onDiagnostics, onEditorReady, onExternalWrite, onOpenSwitcher, refreshFiles, filesVersion, consoleEntries, setConsoleEntries, diagnostics, onJump } = props
   const [explorerW, setExplorerW] = useState(230)
   const [previewW, setPreviewW] = useState(300)
   const [bottomH, setBottomH] = useState(180)
@@ -366,7 +409,9 @@ function DesktopLayout(props: WorkspaceProps & {
             {activeFile ? (
               <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} languageId={languageFromPath(activeFile)} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} onDiagnostics={onDiagnostics} onReady={onEditorReady} />
             ) : (
-              <div class="editor-placeholder">Abra um arquivo no explorador</div>
+              <div class="editor-placeholder">
+                <button onClick={onOpenSwitcher}>Escolher arquivo…</button>
+              </div>
             )}
           </div>
         </section>
@@ -410,9 +455,33 @@ function DesktopLayout(props: WorkspaceProps & {
 }
 
 function TouchLayout(props: WorkspaceProps) {
-  const { project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, onDiagnostics, onEditorReady, onExternalWrite, refreshFiles, filesVersion } = props
+  const { project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, onDiagnostics, onEditorReady, onExternalWrite, onOpenSwitcher, refreshFiles, filesVersion } = props
   const [tab, setTab] = useState<'files' | 'code' | 'result' | 'tutor'>('code')
   const editorViewRef = useRef<EditorView | null>(null)
+  // Gestos de troca rápida na fileira de abas (fling horizontal).
+  const swipeStart = useRef<{ x: number; t: number } | null>(null)
+
+  const cycleTab = (dir: 1 | -1) => {
+    if (!openFiles.length) return
+    const idx = openFiles.indexOf(activeFile ?? '')
+    const next = dir === 1
+      ? (idx + 1) % openFiles.length
+      : idx <= 0 ? openFiles.length - 1 : idx - 1
+    onActivate(openFiles[next])
+  }
+
+  const onTabsPointerDown = (e: PointerEvent) => { swipeStart.current = { x: e.clientX, t: Date.now() } }
+  const onTabsPointerUp = (e: PointerEvent) => {
+    const start = swipeStart.current
+    swipeStart.current = null
+    if (!start) return
+    const dx = e.clientX - start.x
+    const dt = Date.now() - start.t
+    // Fling rápido horizontal (sem atrapalhar o scroll da fileira).
+    if (dt < 400 && Math.abs(dx) > 80) {
+      cycleTab(dx < 0 ? 1 : -1)
+    }
+  }
 
   const insertText = (text: string) => {
     const view = editorViewRef.current
@@ -442,7 +511,8 @@ function TouchLayout(props: WorkspaceProps) {
         {tab === 'code' && (
           <div class="editor-host">
             {openFiles.length > 0 && (
-              <div class="tabs">
+              <div class="tabs" onPointerDown={onTabsPointerDown} onPointerUp={onTabsPointerUp} onPointerCancel={() => { swipeStart.current = null }}>
+                <button class="tab-switcher-btn" onClick={onOpenSwitcher} title="Abrir arquivo (rápido)" aria-label="Abrir arquivo rápido">📂</button>
                 {openFiles.map((p) => (
                   <button key={p} class={`tab ${activeFile === p ? 'active' : ''}`} onClick={() => onActivate(p)}>
                     {p.split('/').pop()}
@@ -454,7 +524,9 @@ function TouchLayout(props: WorkspaceProps) {
             {activeFile ? (
               <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} languageId={languageFromPath(activeFile)} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} onDiagnostics={onDiagnostics} onReady={handleEditorReady} />
             ) : (
-              <div class="editor-placeholder">Abra um arquivo no explorador</div>
+              <div class="editor-placeholder">
+                <button onClick={onOpenSwitcher}>Escolher arquivo…</button>
+              </div>
             )}
           </div>
         )}

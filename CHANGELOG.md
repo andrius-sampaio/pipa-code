@@ -77,3 +77,9 @@
 - `touch-action: manipulation` e remoção do highlight de toque no editor.
 - Botão "Colar" na barra de símbolos do modo Toque (colar sem seleção).
 - Colar com aviso honesto quando a área de transferência não está disponível.
+
+## [0.9.3] - Troca rápida de arquivos
+- Seletor rápido de arquivos (estilo Ctrl+P): overlay com filtro, navegação por setas/Enter, arquivo ativo primeiro.
+- Atalhos de teclado: `Ctrl+P` (seletor), `Ctrl+Tab`/`Ctrl+Shift+Tab` (alternar abas).
+- No modo Toque: botão 📂 na fileira de abas e "fling" horizontal sobre as abas para alternar arquivos.
+- Lugar vazio do editor agora oferece "Escolher arquivo…" direto.

@@ -59,5 +59,9 @@ O repositório inclui workflow em `.github/workflows/deploy.yml` que faz build e
 - **Destaque de sintaxe**: PHP ainda sem destaque (modo legacy indisponível); demais linguagens têm destaque básico.
 - **i18n**: o app é todo em português (pt-BR); estrutura de i18n reservada para o futuro.
 
+## Atalhos de teclado (teclado físico)
+- `Ctrl+S` salvar · `Ctrl+P` seletor rápido de arquivos · `Ctrl+Tab`/`Ctrl+Shift+Tab` alternar arquivos abertos · `Ctrl+`/`Ctrl-`/`Ctrl+0` zoom.
+- No celular: toque em 📂 na fileira de abas ou "arraste rápido" (fling) sobre as abas para alternar arquivos.
+
 ## Licença
 MIT.
