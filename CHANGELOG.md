@@ -100,3 +100,10 @@
 - Boas-vindas de primeira execução: tour de 5 passos (bem-vindo, criar projeto, escrever código, ver resultado, tutor), com Pular/Voltar/Próximo e mostrado uma única vez.
 - Dica contextual no modo Toque (uma vez): gesto rápido nas abas e barra de símbolos, com botão de dispensar.
 - Flags em localStorage (`pipa-code:onboarding-done`, `pipa-code:hint-editor`); desativado no modo arquivo único.
+
+## [0.9.7] - Tela inicial mais clara (mobile-first)
+- Botão principal "Novo projeto" (sem "+"), grande e destacado.
+- "Importar .zip" e "Importar arquivos" viram cards com borda e ícone (não mais textos soltos).
+- Janela de novo projeto com cards selecionáveis por tipo: ícone + nome claro + descrição curta.
+- Templates renomeados: "Página web", "Programa JavaScript", "Programa Python", "Calculadora", "Vazio".
+- Lista de projetos com ícone de pasta, nome, data e botão de excluir com ícone.

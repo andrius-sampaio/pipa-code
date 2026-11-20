@@ -1,11 +1,21 @@
 import { useState, useEffect, useCallback } from 'preact/hooks'
+import type { JSX } from 'preact'
 import { listProjects, createProject, deleteProject, writeFile } from '../storage/projects'
 import { TEMPLATES } from '../templates'
 import { extractZip } from '../files/zip'
+import { IconPlus, IconBox, IconUpload, IconFolder, IconX, IconFile, IconGlobe, IconTerminal, IconCalculator } from './Icons'
 import type { ProjectRecord } from '../storage/db'
 
 interface HomeProps {
   onOpen: (p: ProjectRecord) => void
+}
+
+const TEMPLATE_ICONS: Record<string, JSX.Element> = {
+  blank: <IconFile size={22} />,
+  'html-basic': <IconGlobe size={22} />,
+  'js-basic': <IconTerminal size={22} />,
+  'python-basic': <IconTerminal size={22} />,
+  calculator: <IconCalculator size={22} />,
 }
 
 export function Home({ onOpen }: HomeProps) {
@@ -83,18 +93,22 @@ export function Home({ onOpen }: HomeProps) {
         <p>IDE educacional web, offline. Escolha um projeto ou crie um novo.</p>
       </header>
 
-      <section class="home-section">
-        <div class="home-actions">
-          <button onClick={() => setShowNew(true)}>+ Novo projeto</button>
-          <label class="import-label">
-            Importar .zip
+      <section class="home-actions">
+        <button class="btn-primary home-new" onClick={() => setShowNew(true)}>
+          <IconPlus size={18} /> Novo projeto
+        </button>
+        <div class="home-import-row">
+          <label class="import-card" title="Importar um projeto .zip">
+            <IconBox size={18} />
+            <span>Importar .zip</span>
             <input type="file" accept=".zip" style={{ display: 'none' }} onChange={(e) => {
               const f = (e.target as HTMLInputElement).files?.[0]
               if (f) handleImportZip(f)
             }} />
           </label>
-          <label class="import-label">
-            Importar arquivos
+          <label class="import-card" title="Importar arquivos soltos (HTML, CSS, JS...)">
+            <IconUpload size={18} />
+            <span>Importar arquivos</span>
             <input type="file" multiple style={{ display: 'none' }} onChange={(e) => {
               const fs = (e.target as HTMLInputElement).files
               if (fs && fs.length) handleImportFiles(fs)
@@ -107,17 +121,28 @@ export function Home({ onOpen }: HomeProps) {
       {showNew && (
         <section class="home-card">
           <h2>Novo projeto</h2>
-          <label>Nome do projeto
+          <label class="field">Nome
             <input value={newName} onInput={(e) => setNewName((e.target as HTMLInputElement).value)} placeholder="Meu projeto" />
           </label>
-          <label>Modelo
-            <select value={selectedTemplate} onChange={(e) => setSelectedTemplate((e.target as HTMLSelectElement).value)}>
-              {TEMPLATES.map((t) => <option value={t.id}>{t.name}</option>)}
-            </select>
-          </label>
-          <p class="muted">{TEMPLATES.find((t) => t.id === selectedTemplate)?.description}</p>
+          <div class="field-label">Escolha o tipo</div>
+          <div class="template-list">
+            {TEMPLATES.map((t) => (
+              <button
+                key={t.id}
+                class={`template-card ${selectedTemplate === t.id ? 'selected' : ''}`}
+                onClick={() => setSelectedTemplate(t.id)}
+                aria-pressed={selectedTemplate === t.id}
+              >
+                <span class="template-icon">{TEMPLATE_ICONS[t.id]}</span>
+                <span class="template-info">
+                  <strong>{t.name}</strong>
+                  <span class="muted">{t.description}</span>
+                </span>
+              </button>
+            ))}
+          </div>
           <div class="home-actions">
-            <button onClick={createFromTemplate}>Criar</button>
+            <button class="btn-primary" onClick={createFromTemplate}>Criar</button>
             <button onClick={() => setShowNew(false)}>Cancelar</button>
           </div>
         </section>
@@ -130,10 +155,18 @@ export function Home({ onOpen }: HomeProps) {
           {projects.map((p) => (
             <li key={p.id}>
               <button class="project-item" onClick={() => onOpen(p)}>
-                <span class="project-name">{p.name}</span>
-                <span class="muted">{new Date(p.lastOpened).toLocaleString('pt-BR')}</span>
+                <IconFolder size={18} class="project-icon" />
+                <span class="project-info">
+                  <span class="project-name">{p.name}</span>
+                  <span class="muted">{new Date(p.lastOpened).toLocaleString('pt-BR')}</span>
+                </span>
               </button>
-              <button class="danger" onClick={async (e) => { e.stopPropagation(); if (confirm('Excluir projeto "' + p.name + '"?')) { await deleteProject(p.id); await refresh() } }}>Excluir</button>
+              <button class="icon-btn danger" title={`Excluir ${p.name}`} aria-label={`Excluir ${p.name}`} onClick={async (e) => {
+                e.stopPropagation()
+                if (confirm(`Excluir projeto "${p.name}"?`)) { await deleteProject(p.id); await refresh() }
+              }}>
+                <IconX size={16} />
+              </button>
             </li>
           ))}
         </ul>

@@ -13,14 +13,14 @@ export interface ProjectTemplate {
 export const TEMPLATES: ProjectTemplate[] = [
   {
     id: 'blank',
-    name: 'Projeto em branco',
-    description: 'Um projeto vazio para começar do zero.',
+    name: 'Vazio',
+    description: 'Começar do zero, sem arquivos.',
     files: [],
   },
   {
     id: 'html-basic',
-    name: 'Página HTML (HTML + CSS + JS separados)',
-    description: 'Estrutura básica com index.html, style.css e script.js.',
+    name: 'Página web',
+    description: 'HTML, CSS e JS separados — bom para começar.',
     files: [
       {
         path: 'index.html',
@@ -68,8 +68,8 @@ btn.addEventListener('click', () => {
   },
   {
     id: 'js-basic',
-    name: 'JavaScript básico',
-    description: 'Um arquivo .js com exemplos de variáveis, funções e laços.',
+    name: 'Programa JavaScript',
+    description: 'Código que roda e mostra resultados no console.',
     files: [
       {
         path: 'main.js',
@@ -96,8 +96,8 @@ for (let i = 1; i <= 5; i++) {
   },
   {
     id: 'python-basic',
-    name: 'Python básico',
-    description: 'Um arquivo .py com exemplos de variáveis, funções e laços.',
+    name: 'Programa Python',
+    description: 'Código que roda e mostra resultados com print.',
     files: [
       {
         path: 'main.py',
@@ -122,8 +122,8 @@ for i in range(1, 6):
   },
   {
     id: 'calculator',
-    name: 'Calculadora (HTML/CSS/JS)',
-    description: 'Calculadora simples com botões e display.',
+    name: 'Calculadora',
+    description: 'Página de calculadora pronta para você modificar.',
     files: [
       {
         path: 'index.html',
