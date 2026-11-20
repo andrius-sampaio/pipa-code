@@ -5,7 +5,7 @@ import { loadPrefs, savePrefs, type Prefs, type Theme } from '../app/preferences
 import { Explorer } from './Explorer'
 import { Editor, pasteIntoView } from '../editor/Editor'
 import { QuickSwitcher } from './QuickSwitcher'
-import { IconMonitor, IconSmartphone, IconX, IconFolder, IconFolderOpen, IconPlay, IconPanel, IconCode, IconBook } from './Icons'
+import { IconMonitor, IconSmartphone, IconX, IconFolder, IconFolderOpen, IconPlay, IconPanel, IconCode, IconBook, IconBulb } from './Icons'
 import { loadLanguageExtension, languageFromPath } from '../editor/languages'
 import { writeFile, findFile, listFiles, touchProject } from '../storage/projects'
 import { Preview } from '../preview/Preview'
@@ -471,6 +471,14 @@ function TouchLayout(props: WorkspaceProps) {
   const editorViewRef = useRef<EditorView | null>(null)
   // Gestos de troca rápida na fileira de abas (fling horizontal).
   const swipeStart = useRef<{ x: number; t: number } | null>(null)
+  // Dica única sobre gestos e barra de símbolos (mostrada uma vez).
+  const [showHint, setShowHint] = useState(() => {
+    try { return localStorage.getItem('pipa-code:hint-editor') !== '1' } catch { return false }
+  })
+  const dismissHint = () => {
+    try { localStorage.setItem('pipa-code:hint-editor', '1') } catch { /* ignore */ }
+    setShowHint(false)
+  }
 
   // Teclas extras conforme a linguagem do arquivo ativo.
   const langId = activeFile ? languageFromPath(activeFile) : ''
@@ -525,6 +533,12 @@ function TouchLayout(props: WorkspaceProps) {
         {tab === 'files' && <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} refreshToken={filesVersion} />}
         {tab === 'code' && (
           <div class="editor-host">
+            {showHint && openFiles.length > 0 && (
+              <div class="hint-banner">
+                <span><IconBulb size={15} /> Dica: arraste rápido nas abas para trocar de arquivo; a barra de símbolos acelera a digitação.</span>
+                <button onClick={dismissHint} aria-label="Fechar dica"><IconX size={14} /></button>
+              </div>
+            )}
             {openFiles.length > 0 && (
               <div class="tabs" onPointerDown={onTabsPointerDown} onPointerUp={onTabsPointerUp} onPointerCancel={() => { swipeStart.current = null }}>
                 <button class="tab-switcher-btn" onClick={onOpenSwitcher} title="Abrir arquivo (rápido)" aria-label="Abrir arquivo rápido"><IconFolderOpen size={16} /></button>

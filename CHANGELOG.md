@@ -95,3 +95,8 @@
 - Barra de símbolos contextual por linguagem (HTML: `<div>`, `<p>`, `<!-- -->`; CSS: `display:`…; JS/TS: `console.log(`, `function `, `=>`; Python: `print(`, `def `, `for `).
 - Botão "Ver resultado" (▶) na fileira de abas do modo Toque: um toque leva ao preview.
 - Snippets novos no autocompletar: `while`, `console.log` (JS/TS), `while`, `print` (Python), `a` e `img` (HTML).
+
+## [0.9.6] - Onboarding e dicas contextuais
+- Boas-vindas de primeira execução: tour de 5 passos (bem-vindo, criar projeto, escrever código, ver resultado, tutor), com Pular/Voltar/Próximo e mostrado uma única vez.
+- Dica contextual no modo Toque (uma vez): gesto rápido nas abas e barra de símbolos, com botão de dispensar.
+- Flags em localStorage (`pipa-code:onboarding-done`, `pipa-code:hint-editor`); desativado no modo arquivo único.

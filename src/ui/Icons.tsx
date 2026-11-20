@@ -84,3 +84,7 @@ export const IconDownload = (p: IconProps) => (
 export const IconBox = (p: IconProps) => (
   <Svg {...p}><path d="M21 8l-9-5-9 5v8l9 5 9-5z" /><path d="M3 8l9 5 9-5M12 13v8" /></Svg>
 )
+
+export const IconBulb = (p: IconProps) => (
+  <Svg {...p}><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2z" /></Svg>
+)
