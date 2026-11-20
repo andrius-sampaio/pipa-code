@@ -5,6 +5,7 @@ import { loadPrefs, savePrefs, type Prefs, type Theme } from '../app/preferences
 import { Explorer } from './Explorer'
 import { Editor, pasteIntoView } from '../editor/Editor'
 import { QuickSwitcher } from './QuickSwitcher'
+import { IconMonitor, IconSmartphone, IconX, IconFolder, IconFolderOpen, IconPlay, IconPanel, IconCode, IconBook } from './Icons'
 import { loadLanguageExtension, languageFromPath } from '../editor/languages'
 import { writeFile, findFile, listFiles, touchProject } from '../storage/projects'
 import { Preview } from '../preview/Preview'
@@ -267,14 +268,15 @@ export function Layout({ project, onClose }: LayoutProps) {
         <strong>Pipa Code</strong>
         <span class="project-name">{project.name}</span>
         <nav class="topbar-actions">
-          <button onClick={() => (prefs.mode === 'desktop' ? exitDesktop() : enterDesktop())}>
-            {prefs.mode === 'desktop' ? 'Sair do Modo Desktop' : 'Modo Desktop'}
+          <button onClick={() => (prefs.mode === 'desktop' ? exitDesktop() : enterDesktop())} title={prefs.mode === 'desktop' ? 'Sair do Modo Desktop' : 'Modo Desktop'}>
+            {prefs.mode === 'desktop' ? <IconSmartphone size={16} /> : <IconMonitor size={16} />}
+            <span class="btn-label">{prefs.mode === 'desktop' ? 'Sair do Modo Desktop' : 'Modo Desktop'}</span>
           </button>
           {prefs.mode === 'desktop' && (
             <>
-              <button class={prefs.desktopPanels.explorer ? 'active' : ''} onClick={() => togglePanel('explorer')} title="Explorador">Explorador</button>
-              <button class={prefs.desktopPanels.preview ? 'active' : ''} onClick={() => togglePanel('preview')} title="Preview">Preview</button>
-              <button class={prefs.desktopPanels.bottom ? 'active' : ''} onClick={() => togglePanel('bottom')} title="Painel">Painel</button>
+              <button class={prefs.desktopPanels.explorer ? 'active' : ''} onClick={() => togglePanel('explorer')} title="Explorador"><IconFolder size={16} /><span class="btn-label">Explorador</span></button>
+              <button class={prefs.desktopPanels.preview ? 'active' : ''} onClick={() => togglePanel('preview')} title="Preview"><IconPlay size={16} /><span class="btn-label">Preview</span></button>
+              <button class={prefs.desktopPanels.bottom ? 'active' : ''} onClick={() => togglePanel('bottom')} title="Painel"><IconPanel size={16} /><span class="btn-label">Painel</span></button>
             </>
           )}
           <select value={prefs.theme} onChange={(e) => setPrefs((p) => ({ ...p, theme: (e.target as HTMLSelectElement).value as Theme }))} aria-label="Tema">
@@ -291,7 +293,7 @@ export function Layout({ project, onClose }: LayoutProps) {
             <option value="bright-future">Bright Future</option>
             <option value="all-hallows-eve">All Hallows Eve</option>
           </select>
-          <button onClick={onClose} title="Fechar projeto">Fechar projeto</button>
+          <button onClick={onClose} title="Fechar projeto"><IconX size={16} /><span class="btn-label">Fechar projeto</span></button>
         </nav>
       </header>
 
@@ -314,9 +316,9 @@ export function Layout({ project, onClose }: LayoutProps) {
       </main>
 
       <footer class="statusbar">
-        <span>Modo: {prefs.mode === 'desktop' ? 'Desktop' : 'Toque'}</span>
-        <span>Zoom: {Math.round(prefs.zoom * 100)}%</span>
-        <span>Tema: {prefs.theme}</span>
+        <span class="status-extra">Modo: {prefs.mode === 'desktop' ? 'Desktop' : 'Toque'}</span>
+        <span class="status-extra">Zoom: {Math.round(prefs.zoom * 100)}%</span>
+        <span class="status-extra">Tema: {prefs.theme}</span>
         {activeFile && <span>Arquivo: {activeFile}</span>}
         <span>Problemas: {diagnostics.filter((d) => d.severity === 'error').length} erros, {diagnostics.filter((d) => d.severity === 'warning').length} avisos</span>
       </footer>
@@ -512,7 +514,7 @@ function TouchLayout(props: WorkspaceProps) {
           <div class="editor-host">
             {openFiles.length > 0 && (
               <div class="tabs" onPointerDown={onTabsPointerDown} onPointerUp={onTabsPointerUp} onPointerCancel={() => { swipeStart.current = null }}>
-                <button class="tab-switcher-btn" onClick={onOpenSwitcher} title="Abrir arquivo (rápido)" aria-label="Abrir arquivo rápido">📂</button>
+                <button class="tab-switcher-btn" onClick={onOpenSwitcher} title="Abrir arquivo (rápido)" aria-label="Abrir arquivo rápido"><IconFolderOpen size={16} /></button>
                 {openFiles.map((p) => (
                   <button key={p} class={`tab ${activeFile === p ? 'active' : ''}`} onClick={() => onActivate(p)}>
                     {p.split('/').pop()}
@@ -534,10 +536,10 @@ function TouchLayout(props: WorkspaceProps) {
         {tab === 'tutor' && <div class="panel-body"><TutorPanel activeFile={activeFile} content={activeFile ? (contents[activeFile] ?? '') : ''} project={project} onRefreshFiles={refreshFiles} onExternalWrite={onExternalWrite} /></div>}
       </div>
       <nav class="touch-nav">
-        <button class={tab === 'files' ? 'active' : ''} onClick={() => setTab('files')}>Arquivos</button>
-        <button class={tab === 'code' ? 'active' : ''} onClick={() => setTab('code')}>Código</button>
-        <button class={tab === 'result' ? 'active' : ''} onClick={() => setTab('result')}>Resultado</button>
-        <button class={tab === 'tutor' ? 'active' : ''} onClick={() => setTab('tutor')}>Tutor</button>
+        <button class={tab === 'files' ? 'active' : ''} onClick={() => setTab('files')}><IconFolder size={18} />Arquivos</button>
+        <button class={tab === 'code' ? 'active' : ''} onClick={() => setTab('code')}><IconCode size={18} />Código</button>
+        <button class={tab === 'result' ? 'active' : ''} onClick={() => setTab('result')}><IconPlay size={18} />Resultado</button>
+        <button class={tab === 'tutor' ? 'active' : ''} onClick={() => setTab('tutor')}><IconBook size={18} />Tutor</button>
       </nav>
       <div class="symbol-bar">
         <button onClick={() => insertText('\t')} title="Tab">Tab</button>

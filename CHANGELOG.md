@@ -83,3 +83,10 @@
 - Atalhos de teclado: `Ctrl+P` (seletor), `Ctrl+Tab`/`Ctrl+Shift+Tab` (alternar abas).
 - No modo Toque: botão 📂 na fileira de abas e "fling" horizontal sobre as abas para alternar arquivos.
 - Lugar vazio do editor agora oferece "Escolher arquivo…" direto.
+
+## [0.9.4] - Ícones SVG e compactação da interface
+- Conjunto de ícones SVG inline (sem emojis, consistente entre Android/iOS), offline.
+- Topbar com ícone + rótulo; em telas estreitas (≤640px) mostra só ícones (com tooltip).
+- Navegação do modo Toque com ícones (Arquivos, Código, Resultado, Tutor).
+- Explorador: árvore e toolbar com ícones SVG; Preview/Python com ícones executar/parar.
+- Statusbar: em telas estreitas mostra só arquivo atual e problemas.

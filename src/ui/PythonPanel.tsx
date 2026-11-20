@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
 import { PythonRunner } from '../runtime/pythonRunner'
+import { IconPlay, IconStop } from './Icons'
 
 export function PythonPanel({ content }: { content: string }) {
   const [running, setRunning] = useState(false)
@@ -16,8 +17,8 @@ export function PythonPanel({ content }: { content: string }) {
   return (
     <div class="python-panel">
       <div class="python-toolbar">
-        <button onClick={run} disabled={running}>▶ Executar Python</button>
-        <button onClick={stop} disabled={!running}>⏹ Parar</button>
+        <button onClick={run} disabled={running}><IconPlay size={14} /> Executar Python</button>
+        <button onClick={stop} disabled={!running}><IconStop size={14} /> Parar</button>
         <span class="muted">Python via Pyodide (carregado sob demanda, ~14 MB).</span>
       </div>
       <div class="console-output">

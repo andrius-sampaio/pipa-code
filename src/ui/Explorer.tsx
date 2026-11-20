@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'preact/hooks'
 import { listFiles, writeFile, deleteFile, renameFile, type FileRecord } from '../storage/projects'
 import { extractZip, downloadBlob, createZip } from '../files/zip'
+import { IconUpload, IconBox, IconDownload, IconFolder, IconFile } from './Icons'
 import type { ProjectRecord } from '../storage/db'
 
 interface ExplorerProps {
@@ -176,7 +177,7 @@ export function Explorer({ project, selectedFile, onSelectFile, refreshToken }: 
           onTouchEnd={() => { window.clearTimeout(longPressTimers.current[node.path]); delete longPressTimers.current[node.path] }}
           onTouchMove={() => { window.clearTimeout(longPressTimers.current[node.path]); delete longPressTimers.current[node.path] }}
         >
-          <span class="tree-icon">{isFolder ? '📁' : '📄'}</span>
+          <span class="tree-icon">{isFolder ? <IconFolder size={16} /> : <IconFile size={16} />}</span>
           <span class="tree-name">{node.name}</span>
         </div>
         {isFolder && node.children && Object.values(node.children).map((c: any) => renderNode(c, depth + 1))}
@@ -190,20 +191,20 @@ export function Explorer({ project, selectedFile, onSelectFile, refreshToken }: 
         <button onClick={() => { setCreating('file'); setCreatingParent(''); setNewName('') }} title="Novo arquivo">+Arq</button>
         <button onClick={() => { setCreating('folder'); setCreatingParent(''); setNewName('') }} title="Nova pasta">+Pasta</button>
         <label class="icon-btn" title="Importar arquivos">
-          ⬆
+          <IconUpload size={16} />
           <input type="file" multiple style={{ display: 'none' }} onChange={(e) => {
             const fs = (e.target as HTMLInputElement).files
             if (fs && fs.length) handleImportFiles(fs)
           }} />
         </label>
         <label class="icon-btn" title="Importar .zip">
-          📦
+          <IconBox size={16} />
           <input type="file" accept=".zip" style={{ display: 'none' }} onChange={(e) => {
             const f = (e.target as HTMLInputElement).files?.[0]
             if (f) handleImportZip(f)
           }} />
         </label>
-        <button onClick={handleExportZip} title="Exportar .zip">⬇</button>
+        <button onClick={handleExportZip} title="Exportar .zip"><IconDownload size={16} /></button>
       </div>
 
       {creating && (

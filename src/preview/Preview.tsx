@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'preact/hooks'
+import { IconPlay, IconStop } from '../ui/Icons'
 
 interface PreviewProps {
   contents: Record<string, string>
@@ -103,8 +104,8 @@ export function Preview({ contents, onConsole }: PreviewProps) {
   return (
     <div class="preview-wrap">
       <div class="preview-toolbar">
-        <button onClick={run}>▶ Executar</button>
-        <button onClick={() => setSrcdoc('')}>⏹ Parar</button>
+        <button onClick={run}><IconPlay size={14} /> Executar</button>
+        <button onClick={() => setSrcdoc('')}><IconStop size={14} /> Parar</button>
         <label class="auto-toggle">
           <input type="checkbox" checked={auto} onChange={(e) => setAuto((e.target as HTMLInputElement).checked)} />
           Atualização automática
