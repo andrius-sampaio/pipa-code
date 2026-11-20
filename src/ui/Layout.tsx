@@ -3,7 +3,7 @@ import type { EditorView } from 'codemirror'
 import { undo, redo } from '@codemirror/commands'
 import { loadPrefs, savePrefs, type Prefs, type Theme } from '../app/preferences'
 import { Explorer } from './Explorer'
-import { Editor } from '../editor/Editor'
+import { Editor, pasteIntoView } from '../editor/Editor'
 import { loadLanguageExtension, languageFromPath } from '../editor/languages'
 import { writeFile, findFile, listFiles, touchProject } from '../storage/projects'
 import { Preview } from '../preview/Preview'
@@ -480,6 +480,7 @@ function TouchLayout(props: WorkspaceProps) {
         <button onClick={() => insertText('=')} title="Igual">=</button>
         <button onClick={() => insertText('/')} title="Barra">/</button>
         <button onClick={() => insertText('#')} title="Cerquilha">#</button>
+        <button onClick={() => { const v = editorViewRef.current; if (v) pasteIntoView(v) }} title="Colar da área de transferência">Colar</button>
         <button onClick={handleUndo} title="Desfazer">Undo</button>
         <button onClick={handleRedo} title="Refazer">Redo</button>
       </div>

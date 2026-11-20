@@ -69,3 +69,11 @@
 - Linguagens legacy (Java, C/C++, C#, Kotlin, etc.) com import correto para produção (antes quebrava silenciosamente).
 - TypeScript modo estrito; barrels reais no lugar de placeholders; orçamento de tamanho cobre CSS.
 - Testes: preview, regras HTML, normalização de caminhos (24 testes).
+
+## [0.9.2] - Seleção e edição no celular (UX mobile)
+- Barra de ações de seleção no editor: Copiar, Recortar, Colar, Selecionar tudo, Indentar, Desindentar e limpar seleção, com feedback ("Copiado!").
+- Recortar apaga imediatamente (sem esperar a área de transferência).
+- Fonte do editor >= 16px no modo Toque (evita zoom automático do iOS ao focar).
+- `touch-action: manipulation` e remoção do highlight de toque no editor.
+- Botão "Colar" na barra de símbolos do modo Toque (colar sem seleção).
+- Colar com aviso honesto quando a área de transferência não está disponível.
