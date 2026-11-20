@@ -456,12 +456,25 @@ function DesktopLayout(props: WorkspaceProps & {
   )
 }
 
+// Teclas extras da barra de símbolos por linguagem (inseridas no cursor).
+export const EXTRA_KEYS: Record<string, string[]> = {
+  html: ['<div>', '<p>', '<!--  -->'],
+  css: ['display:', 'color:', 'margin:'],
+  javascript: ['console.log(', 'function ', '=>'],
+  typescript: ['console.log(', 'function ', '=>'],
+  python: ['print(', 'def ', 'for '],
+}
+
 function TouchLayout(props: WorkspaceProps) {
   const { project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, onDiagnostics, onEditorReady, onExternalWrite, onOpenSwitcher, refreshFiles, filesVersion } = props
   const [tab, setTab] = useState<'files' | 'code' | 'result' | 'tutor'>('code')
   const editorViewRef = useRef<EditorView | null>(null)
   // Gestos de troca rápida na fileira de abas (fling horizontal).
   const swipeStart = useRef<{ x: number; t: number } | null>(null)
+
+  // Teclas extras conforme a linguagem do arquivo ativo.
+  const langId = activeFile ? languageFromPath(activeFile) : ''
+  const extraKeys = EXTRA_KEYS[langId] ?? []
 
   const cycleTab = (dir: 1 | -1) => {
     if (!openFiles.length) return
@@ -515,6 +528,7 @@ function TouchLayout(props: WorkspaceProps) {
             {openFiles.length > 0 && (
               <div class="tabs" onPointerDown={onTabsPointerDown} onPointerUp={onTabsPointerUp} onPointerCancel={() => { swipeStart.current = null }}>
                 <button class="tab-switcher-btn" onClick={onOpenSwitcher} title="Abrir arquivo (rápido)" aria-label="Abrir arquivo rápido"><IconFolderOpen size={16} /></button>
+                <button class="tab-switcher-btn" onClick={() => setTab('result')} title="Ver resultado (preview)" aria-label="Ver resultado"><IconPlay size={16} /></button>
                 {openFiles.map((p) => (
                   <button key={p} class={`tab ${activeFile === p ? 'active' : ''}`} onClick={() => onActivate(p)}>
                     {p.split('/').pop()}
@@ -554,6 +568,9 @@ function TouchLayout(props: WorkspaceProps) {
         <button onClick={() => insertText('=')} title="Igual">=</button>
         <button onClick={() => insertText('/')} title="Barra">/</button>
         <button onClick={() => insertText('#')} title="Cerquilha">#</button>
+        {extraKeys.map((k) => (
+          <button key={k} onClick={() => insertText(k)} title={`Inserir ${k}`}>{k}</button>
+        ))}
         <button onClick={() => { const v = editorViewRef.current; if (v) pasteIntoView(v) }} title="Colar da área de transferência">Colar</button>
         <button onClick={handleUndo} title="Desfazer">Undo</button>
         <button onClick={handleRedo} title="Refazer">Redo</button>

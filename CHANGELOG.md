@@ -90,3 +90,8 @@
 - Navegação do modo Toque com ícones (Arquivos, Código, Resultado, Tutor).
 - Explorador: árvore e toolbar com ícones SVG; Preview/Python com ícones executar/parar.
 - Statusbar: em telas estreitas mostra só arquivo atual e problemas.
+
+## [0.9.5] - Digitação e atalhos
+- Barra de símbolos contextual por linguagem (HTML: `<div>`, `<p>`, `<!-- -->`; CSS: `display:`…; JS/TS: `console.log(`, `function `, `=>`; Python: `print(`, `def `, `for `).
+- Botão "Ver resultado" (▶) na fileira de abas do modo Toque: um toque leva ao preview.
+- Snippets novos no autocompletar: `while`, `console.log` (JS/TS), `while`, `print` (Python), `a` e `img` (HTML).

@@ -13,16 +13,30 @@ export const KEYWORDS: Record<string, string[]> = {
 export const SNIPPETS: Record<string, { label: string; snippet: string }[]> = {
   javascript: [
     { label: 'for', snippet: 'for (let i = 0; i < ${1:n}; i++) {\n\t${2}\n}' },
+    { label: 'while', snippet: 'while (${1:condicao}) {\n\t${2}\n}' },
     { label: 'if', snippet: 'if (${1:condicao}) {\n\t${2}\n}' },
     { label: 'function', snippet: 'function ${1:nome}(${2}) {\n\t${3}\n}' },
     { label: 'arrow', snippet: 'const ${1:nome} = (${2}) => {\n\t${3}\n}' },
+    { label: 'console.log', snippet: 'console.log(${1:valor})' },
+  ],
+  typescript: [
+    { label: 'for', snippet: 'for (let i = 0; i < ${1:n}; i++) {\n\t${2}\n}' },
+    { label: 'while', snippet: 'while (${1:condicao}) {\n\t${2}\n}' },
+    { label: 'if', snippet: 'if (${1:condicao}) {\n\t${2}\n}' },
+    { label: 'function', snippet: 'function ${1:nome}(${2}) {\n\t${3}\n}' },
+    { label: 'arrow', snippet: 'const ${1:nome} = (${2}) => {\n\t${3}\n}' },
+    { label: 'console.log', snippet: 'console.log(${1:valor})' },
   ],
   python: [
     { label: 'for', snippet: 'for i in range(${1:n}):\n    ${2}' },
+    { label: 'while', snippet: 'while ${1:condicao}:\n    ${2}' },
     { label: 'if', snippet: 'if ${1:condicao}:\n    ${2}' },
     { label: 'def', snippet: 'def ${1:nome}(${2}):\n    ${3}' },
+    { label: 'print', snippet: 'print(${1:valor})' },
   ],
   html: [
     { label: 'html5', snippet: '<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${1:Titulo}</title>\n</head>\n<body>\n  ${2}\n</body>\n</html>' },
+    { label: 'a', snippet: '<a href="${1:#}">${2:texto}</a>' },
+    { label: 'img', snippet: '<img src="${1:foto.png}" alt="${2:descricao}">' },
   ],
 }
