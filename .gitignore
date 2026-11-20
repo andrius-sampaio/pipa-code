@@ -19,3 +19,15 @@ Thumbs.db
 .env.local
 # Build singlefile
 dist-single/
+
+# Config de ambiente local (skills, MCPs, agentes)
+.agents/
+.claude/
+.mcp.json
+skills-lock.json
+
+# Documentação pessoal do professor (não versionar)
+projeto_pipa_code.md
+
+# Capturas de teste
+screenshots/
