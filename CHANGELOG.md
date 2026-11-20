@@ -107,3 +107,5 @@
 - Janela de novo projeto com cards selecionáveis por tipo: ícone + nome claro + descrição curta.
 - Templates renomeados: "Página web", "Programa JavaScript", "Programa Python", "Calculadora", "Vazio".
 - Lista de projetos com ícone de pasta, nome, data e botão de excluir com ícone.
+- Ordem dos tipos: Página web primeiro, Vazio por último; ícones com cor própria por tipo (azul/amarelo/azul-python/rosa/cinza).
+- Descrição da Calculadora explicita que é um projeto pronto para testar e modificar.

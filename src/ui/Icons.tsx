@@ -1,4 +1,4 @@
-import type { JSX } from 'preact'
+import type { JSX, CSSProperties } from 'preact'
 
 // Ícones SVG inline (estilo Lucide, traço currentColor). Sem dependências e
 // consistentes entre plataformas (ao contrário de emojis). Todos decorativos
@@ -8,6 +8,7 @@ interface IconProps {
   size?: number
   class?: string
   title?: string
+  style?: string | CSSProperties
 }
 
 function Svg({ size = 18, children, ...rest }: IconProps & { children: JSX.Element | JSX.Element[] }) {

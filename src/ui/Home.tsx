@@ -11,11 +11,11 @@ interface HomeProps {
 }
 
 const TEMPLATE_ICONS: Record<string, JSX.Element> = {
-  blank: <IconFile size={22} />,
-  'html-basic': <IconGlobe size={22} />,
-  'js-basic': <IconTerminal size={22} />,
-  'python-basic': <IconTerminal size={22} />,
-  calculator: <IconCalculator size={22} />,
+  blank: <IconFile size={22} style={{ color: 'var(--muted)' }} />,
+  'html-basic': <IconGlobe size={22} style={{ color: 'var(--accent)' }} />,
+  'js-basic': <IconTerminal size={22} style={{ color: '#f7df1e' }} />,
+  'python-basic': <IconTerminal size={22} style={{ color: '#4b8bbe' }} />,
+  calculator: <IconCalculator size={22} style={{ color: '#f38ba8' }} />,
 }
 
 export function Home({ onOpen }: HomeProps) {

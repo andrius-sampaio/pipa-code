@@ -12,12 +12,6 @@ export interface ProjectTemplate {
 
 export const TEMPLATES: ProjectTemplate[] = [
   {
-    id: 'blank',
-    name: 'Vazio',
-    description: 'Começar do zero, sem arquivos.',
-    files: [],
-  },
-  {
     id: 'html-basic',
     name: 'Página web',
     description: 'HTML, CSS e JS separados — bom para começar.',
@@ -123,7 +117,7 @@ for i in range(1, 6):
   {
     id: 'calculator',
     name: 'Calculadora',
-    description: 'Página de calculadora pronta para você modificar.',
+    description: 'Projeto pronto de calculadora para você testar e modificar (cores, botões, lógica).',
     files: [
       {
         path: 'index.html',
@@ -178,5 +172,11 @@ buttons.forEach((b) => {
 `,
       },
     ],
+  },
+  {
+    id: 'blank',
+    name: 'Vazio',
+    description: 'Sem arquivos — para quem já sabe por onde começar.',
+    files: [],
   },
 ]
