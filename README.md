@@ -53,5 +53,11 @@ O repositório inclui workflow em `.github/workflows/deploy.yml` que faz build e
 - `GUIA_HARDWARE.md`: guia de hardware para o professor.
 - `ALUNO.md`: guia rápido do aluno (1 página).
 
+## Limitações conhecidas (v1)
+- **Preview**: embute HTML/CSS/JS do projeto; referências a imagens/fontes externas ou `url(...)` em CSS ainda não são resolvidas (use arquivos simples).
+- **Python**: roda na thread principal (Pyodide); "Parar" invalida a execução e recarrega a instância na próxima execução — código em loop infinito demora até o tempo máximo (10 s) para ser abandonado.
+- **Destaque de sintaxe**: PHP ainda sem destaque (modo legacy indisponível); demais linguagens têm destaque básico.
+- **i18n**: o app é todo em português (pt-BR); estrutura de i18n reservada para o futuro.
+
 ## Licença
 MIT.

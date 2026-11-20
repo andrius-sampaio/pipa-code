@@ -52,15 +52,15 @@ export const LANGUAGES: LanguageInfo[] = [
   { id: 'markdown', extensions: ['md', 'markdown'], load: async () => (await import('@codemirror/lang-markdown')).markdown() },
   { id: 'python', extensions: ['py'], load: async () => (await import('@codemirror/lang-python')).python() },
   // Demais: legacy modes (leves, sem parser Lezer completo) carregados sob demanda
-  { id: 'java', extensions: ['java'], load: async () => [] },
-  { id: 'c', extensions: ['c', 'h'], load: async () => [] },
-  { id: 'cpp', extensions: ['cpp', 'cc', 'cxx', 'hpp'], load: async () => [] },
-  { id: 'csharp', extensions: ['cs'], load: async () => [] },
-  { id: 'php', extensions: ['php'], load: async () => legacy('php') },
+  { id: 'java', extensions: ['java'], load: async () => legacy('java') },
+  { id: 'c', extensions: ['c', 'h'], load: async () => legacy('c') },
+  { id: 'cpp', extensions: ['cpp', 'cc', 'cxx', 'hpp'], load: async () => legacy('cpp') },
+  { id: 'csharp', extensions: ['cs'], load: async () => legacy('csharp') },
+  { id: 'php', extensions: ['php'], load: async () => [] },
   { id: 'sql', extensions: ['sql'], load: async () => legacy('sql') },
   { id: 'go', extensions: ['go'], load: async () => legacy('go') },
   { id: 'rust', extensions: ['rs'], load: async () => legacy('rust') },
-  { id: 'kotlin', extensions: ['kt', 'kts'], load: async () => [] },
+  { id: 'kotlin', extensions: ['kt', 'kts'], load: async () => legacy('kotlin') },
   { id: 'swift', extensions: ['swift'], load: async () => legacy('swift') },
   { id: 'ruby', extensions: ['rb'], load: async () => legacy('ruby') },
   { id: 'lua', extensions: ['lua'], load: async () => legacy('lua') },
@@ -71,11 +71,8 @@ export const LANGUAGES: LanguageInfo[] = [
 
 async function legacy(name: string): Promise<any> {
   try {
-    const { StreamLanguage } = await import('@codemirror/language')
-    const mod = await import(`@codemirror/legacy-modes/mode/${name}.js`)
-    const mode = (mod as any).default ?? (mod as any)[name] ?? Object.values(mod)[0]
-    if (!mode) return []
-    return StreamLanguage.define(mode)
+    const mod = await import('./legacyModes')
+    return mod.LEGACY_MODES[name] ?? []
   } catch {
     return []
   }

@@ -1,3 +1,5 @@
-// Pasta: editor
-// (Fundação da Fase 0 — conteúdo será implementado nas próximas fases)
-export {}
+export { Editor } from './Editor'
+export { createLinter } from './diagnostics'
+export type { Diagnostic } from './diagnostics'
+export { languageFromPath, loadLanguageExtension } from './languages'
+export type { LanguageId } from './languages'

@@ -1,3 +1,2 @@
-// Pasta: files
-// (Fundação da Fase 0 — conteúdo será implementado nas próximas fases)
-export {}
+export { createZip, extractZip, downloadBlob } from './zip'
+export type { ZipEntry } from './zip'

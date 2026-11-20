@@ -1,3 +1,6 @@
-// Pasta: tutor
-// (Fundação da Fase 0 — conteúdo será implementado nas próximas fases)
-export {}
+export { provedorRegras } from './provedores/regras'
+export type { Dica, ProvedorDeTutor } from './provedores/regras'
+export { extraDiagnostics } from './rules'
+export { analisarEstrutura, separarHtml } from './estrutura'
+export { detectarNivel, rotuloNivel } from './nivel'
+export type { Nivel } from './nivel'

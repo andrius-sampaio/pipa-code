@@ -56,3 +56,16 @@
 - Painéis redimensionáveis no Modo Desktop (arrastar divisores).
 - Botões da barra de atividades funcionais (Arquivos, Tutor/Painel, Preview).
 - UI polida com estilo iOS (cores, blur, bordas arredondadas, sombras).
+
+## [0.9.1] - Correções de auditoria
+- PWA: `start_url`, `scope`, `id`, fallback offline e cache do Pyodide agora respeitam a base `/pipa-code/` (funciona em GitHub Pages).
+- Editor: troca de linguagem via `Compartment` — não perde mais linter, autocompletar e atalhos.
+- Python: `stop()` e timeout invalidam a execução anterior (sem callbacks duplicados); instância é recarregada após timeout.
+- Preview: só aceita mensagens do próprio iframe; referências relativas resolvidas a partir da pasta do HTML.
+- Tutor "Separar para mim": cria os arquivos e atualiza explorador/preview automaticamente.
+- Explorador: menu de contexto fecha com Escape/clique fora; "novo aqui" usa a pasta do item; nomes/caminhos validados.
+- Painel inferior redimensiona na direção correta; Painel Problemas pula para o erro no editor; barra de símbolos funcional (Tab, pares, Undo/Redo).
+- Projeto aberto atualiza "recentes"; importação com relatório de falhas; favicon via `%BASE_URL%`.
+- Linguagens legacy (Java, C/C++, C#, Kotlin, etc.) com import correto para produção (antes quebrava silenciosamente).
+- TypeScript modo estrito; barrels reais no lugar de placeholders; orçamento de tamanho cobre CSS.
+- Testes: preview, regras HTML, normalização de caminhos (24 testes).

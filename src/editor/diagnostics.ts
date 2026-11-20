@@ -17,10 +17,12 @@ export interface DiagnosticsReporter {
 }
 
 // Cria um linter do CodeMirror que combina erros do parser Lezer + regras extras.
-export function createLinter(language: string, reporter?: DiagnosticsReporter) {
+// `language` pode ser uma string fixa ou um getter (para acompanhar trocas de arquivo/linguagem).
+export function createLinter(language: string | (() => string), reporter?: DiagnosticsReporter) {
   return linter((view) => {
     const state = view.state
     const diags: Diagnostic[] = []
+    const languageId = typeof language === 'function' ? language() : language
 
     // 1. Erros de sintaxe do parser Lezer
     try {
@@ -37,7 +39,7 @@ export function createLinter(language: string, reporter?: DiagnosticsReporter) {
 
     // 2. Regras extras
     const code = state.doc.toString()
-    const extras = extraDiagnostics(language, code)
+    const extras = extraDiagnostics(languageId, code)
     for (const d of extras) diags.push(d)
 
     // calcular linha/coluna

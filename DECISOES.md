@@ -34,3 +34,25 @@ Este arquivo registra decisões importantes e o motivo. Formato: data, decisão,
 - Comparacao: Pyodide (Python 3, ~14 MB, WASM, mais compativel) vs Skulpt (Python 2, ~1-2 MB, JS puro, menos compativel).
 - Decisao: usar Pyodide como padrao, carregado sob demanda com aviso de tamanho e cache offline. Skulpt fica como alternativa futura.
 - Implementacao: arquivos em public/pyodide/, cache-first no Service Worker, botao Parar recarrega instancia, tempo maximo padrao 10s.
+
+## 2026-11-20 — Auditoria e correções
+
+### 9. PWA: caminhos consistentes com a base
+- **Decisão:** `start_url`, `scope`, `id`, `navigateFallback`, denylist e cache do Pyodide usam o prefixo `/pipa-code/` (constante compartilhada no `vite.config.ts`).
+- **Motivo:** com `base: '/pipa-code/'` os caminhos absolutos `'/'` apontavam para fora do app no GitHub Pages.
+
+### 10. Editor: extensões em compartimentos (CodeMirror Compartment)
+- **Decisão:** montar o estado do editor uma única vez com todas as extensões e trocar apenas a linguagem via `reconfigure`.
+- **Motivo:** a reconstrução anterior do estado perdia linter, autocompletar e atalhos a cada troca de linguagem.
+
+### 11. Python: parada por geração, não por cancelamento real
+- **Decisão:** `stop()` e timeout invalidam a execução por contador de geração; a instância Pyodide é descartada e recarregada sob demanda.
+- **Motivo:** Pyodide na thread principal não pode ser interrompido no meio da execução; gerações evitam callbacks duplicados e estado inconsistente. Worker com `terminate()` fica como evolução futura.
+
+### 12. TypeScript modo estrito
+- **Decisão:** habilitar `"strict": true`.
+- **Motivo:** mais segurança de tipos com custo baixo no projeto atual.
+
+### 13. Modos legacy com import estático
+- **Decisão:** importações literais dos modos legacy em um chunk sob demanda (`src/editor/legacyModes.ts`).
+- **Motivo:** import dinâmico com variável (`import(\`.../${name}.js\`)`) não é suportado pelo bundler em produção — o destaque quebrava silenciosamente.

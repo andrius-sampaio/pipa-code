@@ -1,3 +1,3 @@
-// Pasta: app
-// (Fundação da Fase 0 — conteúdo será implementado nas próximas fases)
-export {}
+// Preferências do aluno (persistidas em localStorage).
+export { loadPrefs, savePrefs } from './preferences'
+export type { Prefs, Theme, Mode } from './preferences'

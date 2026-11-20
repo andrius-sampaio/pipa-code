@@ -4,6 +4,17 @@ import { nanoid } from './ids'
 
 export { nanoid }
 
+// Normaliza um caminho: separadores, remove "." e vazios, resolve ".." sem sair da raiz.
+export function normalizePath(path: string): string {
+  const parts = path.replace(/\\/g, '/').split('/').filter((p) => p && p !== '.')
+  const out: string[] = []
+  for (const p of parts) {
+    if (p === '..') out.pop()
+    else out.push(p)
+  }
+  return out.join('/')
+}
+
 export async function listProjects(): Promise<ProjectRecord[]> {
   const db = await getDB()
   const all = await db.getAll('projects')
@@ -67,10 +78,12 @@ export async function findFile(projectId: string, path: string): Promise<FileRec
 }
 
 export async function writeFile(projectId: string, path: string, content: string, type: 'file' | 'folder' = 'file'): Promise<FileRecord> {
+  const clean = normalizePath(path)
+  if (!clean) throw new Error('Caminho inválido.')
   const db = await getDB()
-  const existing = await findFile(projectId, path)
+  const existing = await findFile(projectId, clean)
   const now = Date.now()
-  const name = path.split('/').filter(Boolean).pop() || path
+  const name = clean.split('/').filter(Boolean).pop() || clean
   if (existing) {
     existing.content = content
     existing.updatedAt = now
@@ -78,7 +91,7 @@ export async function writeFile(projectId: string, path: string, content: string
     await touchProject(projectId)
     return existing
   }
-  const rec: FileRecord = { id: nanoid(), projectId, path, name, type, content, updatedAt: now }
+  const rec: FileRecord = { id: nanoid(), projectId, path: clean, name, type, content, updatedAt: now }
   await db.put('files', rec)
   await touchProject(projectId)
   return rec
@@ -92,12 +105,15 @@ export async function deleteFile(id: string): Promise<void> {
 }
 
 export async function renameFile(id: string, newPath: string): Promise<void> {
+  const clean = normalizePath(newPath)
+  if (!clean) throw new Error('Caminho inválido.')
   const db = await getDB()
   const rec = await db.get('files', id)
   if (!rec) return
   const oldPath = rec.path
-  const name = newPath.split('/').filter(Boolean).pop() || newPath
-  rec.path = newPath
+  if (clean === oldPath) return
+  const name = clean.split('/').filter(Boolean).pop() || clean
+  rec.path = clean
   rec.name = name
   rec.updatedAt = Date.now()
   await db.put('files', rec)
@@ -106,7 +122,7 @@ export async function renameFile(id: string, newPath: string): Promise<void> {
     const children = await db.getAllFromIndex('files', 'by-project', rec.projectId)
     for (const c of children) {
       if (c.path.startsWith(oldPath + '/')) {
-        c.path = newPath + c.path.slice(oldPath.length)
+        c.path = clean + c.path.slice(oldPath.length)
         c.updatedAt = Date.now()
         await db.put('files', c)
       }

@@ -1,3 +1,3 @@
-// Pasta: i18n
-// (Fundação da Fase 0 — conteúdo será implementado nas próximas fases)
+// Reservado para internacionalização (fora do escopo da v1 — o app é em pt-BR).
+// Não importar nada daqui ainda.
 export {}

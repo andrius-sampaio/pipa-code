@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'preact/hooks'
+import { useState, useEffect, useCallback, useRef } from 'preact/hooks'
 import { listFiles, writeFile, deleteFile, renameFile, type FileRecord } from '../storage/projects'
 import { extractZip, downloadBlob, createZip } from '../files/zip'
 import type { ProjectRecord } from '../storage/db'
@@ -7,6 +7,8 @@ interface ExplorerProps {
   project: ProjectRecord
   selectedFile: string | null
   onSelectFile: (path: string | null) => void
+  /** Incremente para forçar recarregamento (ex.: após ações externas que criam arquivos). */
+  refreshToken?: number
 }
 
 function buildTree(files: FileRecord[]): any {
@@ -24,22 +26,57 @@ function buildTree(files: FileRecord[]): any {
   return root
 }
 
-export function Explorer({ project, selectedFile, onSelectFile }: ExplorerProps) {
+// Pasta que contém um caminho ('' para a raiz).
+function parentDir(path: string): string {
+  return path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : ''
+}
+
+// Valida um nome de arquivo/pasta simples (sem "/", sem vazios, sem só espaços).
+function isValidName(name: string): boolean {
+  const trimmed = name.trim()
+  if (!trimmed) return false
+  if (trimmed.includes('/')) return false
+  if (trimmed.includes('\\')) return false
+  return true
+}
+
+export function Explorer({ project, selectedFile, onSelectFile, refreshToken }: ExplorerProps) {
   const [files, setFiles] = useState<FileRecord[]>([])
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; file: FileRecord | null; path: string } | null>(null)
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState<'file' | 'folder' | null>(null)
   const [creatingParent, setCreatingParent] = useState('')
+  const longPressTimers = useRef<Record<string, number>>({})
 
   const refresh = useCallback(async () => {
     setFiles(await listFiles(project.id))
   }, [project.id])
 
-  useEffect(() => { refresh() }, [refresh])
+  useEffect(() => { refresh() }, [refresh, refreshToken])
+
+  // Fecha o menu de contexto com Escape ou clique fora dele.
+  useEffect(() => {
+    if (!ctxMenu) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setCtxMenu(null) }
+    const onClick = () => setCtxMenu(null)
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('click', onClick)
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('click', onClick) }
+  }, [ctxMenu])
+
+  useEffect(() => () => {
+    for (const t of Object.values(longPressTimers.current)) window.clearTimeout(t)
+    longPressTimers.current = {}
+  }, [])
 
   const handleCreate = async () => {
-    if (!newName.trim() || !creating) return
-    const path = creatingParent ? `${creatingParent}/${newName.trim()}` : newName.trim()
+    if (!isValidName(newName) || !creating) return
+    const name = newName.trim()
+    const path = creatingParent ? `${creatingParent}/${name}` : name
+    if (files.some((f) => f.path === path)) {
+      alert(`Já existe um arquivo/pasta com o nome "${name}" aqui.`)
+      return
+    }
     await writeFile(project.id, path, creating === 'folder' ? '' : '', creating === 'folder' ? 'folder' : 'file')
     setCreating(null)
     setNewName('')
@@ -60,9 +97,19 @@ export function Explorer({ project, selectedFile, onSelectFile }: ExplorerProps)
 
   const handleRename = async (f: FileRecord) => {
     const np = prompt('Novo caminho/nome:', f.path)
-    if (!np || np === f.path) return
-    await renameFile(f.id, np)
-    if (selectedFile === f.path) onSelectFile(np)
+    if (!np || np.trim() === f.path) return
+    const cleaned = np.trim().replace(/^\/+/, '')
+    if (!cleaned || cleaned.includes('\\')) {
+      alert('Nome inválido.')
+      return
+    }
+    const target = files.find((x) => x.path === cleaned && x.id !== f.id)
+    if (target) {
+      alert(`Já existe um arquivo com o caminho "${cleaned}".`)
+      return
+    }
+    await renameFile(f.id, cleaned)
+    if (selectedFile === f.path) onSelectFile(cleaned)
     await refresh()
   }
 
@@ -119,13 +166,15 @@ export function Explorer({ project, selectedFile, onSelectFile }: ExplorerProps)
           onClick={() => { if (!isFolder) onSelectFile(node.path) }}
           onContextMenu={(e) => openCtx(e, files.find((f) => f.path === node.path) || null, node.path)}
           onTouchStart={(e) => {
-            const t = setTimeout(() => openCtx(e as any, files.find((f) => f.path === node.path) || null, node.path), 500)
-            const cancel = () => { window.clearTimeout(t as unknown as number) }
-            // @ts-ignore
-            (e.target as any)._cancel = cancel
+            const path = node.path
+            window.clearTimeout(longPressTimers.current[path])
+            longPressTimers.current[path] = window.setTimeout(() => {
+              delete longPressTimers.current[path]
+              openCtx(e, files.find((f) => f.path === path) || null, path)
+            }, 500)
           }}
-          onTouchEnd={(e) => { const c = (e.target as any)._cancel; if (typeof c === 'function') c() }}
-          onTouchMove={(e) => { const c = (e.target as any)._cancel; if (typeof c === 'function') c() }}
+          onTouchEnd={() => { window.clearTimeout(longPressTimers.current[node.path]); delete longPressTimers.current[node.path] }}
+          onTouchMove={() => { window.clearTimeout(longPressTimers.current[node.path]); delete longPressTimers.current[node.path] }}
         >
           <span class="tree-icon">{isFolder ? '📁' : '📄'}</span>
           <span class="tree-name">{node.name}</span>
@@ -180,8 +229,8 @@ export function Explorer({ project, selectedFile, onSelectFile }: ExplorerProps)
           {ctxMenu.file && ctxMenu.file.type === 'file' && (
             <button onClick={() => { onSelectFile(ctxMenu.file!.path); setCtxMenu(null) }}>Abrir</button>
           )}
-          <button onClick={() => { setCreating('file'); setCreatingParent(ctxMenu.path); setNewName(''); setCtxMenu(null) }}>Novo arquivo aqui</button>
-          <button onClick={() => { setCreating('folder'); setCreatingParent(ctxMenu.path); setNewName(''); setCtxMenu(null) }}>Nova pasta aqui</button>
+          <button onClick={() => { setCreating('file'); setCreatingParent(ctxMenu.file ? parentDir(ctxMenu.file.path) : ctxMenu.path); setNewName(''); setCtxMenu(null) }}>Novo arquivo aqui</button>
+          <button onClick={() => { setCreating('folder'); setCreatingParent(ctxMenu.file ? parentDir(ctxMenu.file.path) : ctxMenu.path); setNewName(''); setCtxMenu(null) }}>Nova pasta aqui</button>
           {ctxMenu.file && <button onClick={() => { handleRename(ctxMenu.file!); setCtxMenu(null) }}>Renomear</button>}
           {ctxMenu.file && ctxMenu.file.type === 'file' && <button onClick={() => { handleDuplicate(ctxMenu.file!); setCtxMenu(null) }}>Duplicar</button>}
           {ctxMenu.file && <button class="danger" onClick={() => { handleDelete(ctxMenu.file!); setCtxMenu(null) }}>Excluir</button>}

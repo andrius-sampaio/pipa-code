@@ -19,3 +19,18 @@ describe('extraDiagnostics js', () => {
     expect(d.some((x) => x.message.includes('var'))).toBe(true)
   })
 })
+
+describe('extraDiagnostics html', () => {
+  it('avisa quando falta DOCTYPE', () => {
+    const d = extraDiagnostics('html', '<html><head></head><body></body></html>')
+    expect(d.some((x) => x.message.includes('DOCTYPE'))).toBe(true)
+  })
+  it('avisa quando img não tem alt', () => {
+    const d = extraDiagnostics('html', '<!DOCTYPE html><html><body><img src="a.png"></body></html>')
+    expect(d.some((x) => x.message.includes('acessibilidade'))).toBe(true)
+  })
+  it('não acusa img com alt', () => {
+    const d = extraDiagnostics('html', '<!DOCTYPE html><html><body><img src="a.png" alt="figura"></body></html>')
+    expect(d.some((x) => x.message.includes('acessibilidade'))).toBe(false)
+  })
+})

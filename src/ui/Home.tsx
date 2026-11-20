@@ -23,17 +23,21 @@ export function Home({ onOpen }: HomeProps) {
 
   const createFromTemplate = async () => {
     const name = newName.trim() || 'Meu projeto'
-    const p = await createProject(name)
-    const tpl = TEMPLATES.find((t) => t.id === selectedTemplate)
-    if (tpl) {
-      for (const f of tpl.files) {
-        await writeFile(p.id, f.path, f.content)
+    try {
+      const p = await createProject(name)
+      const tpl = TEMPLATES.find((t) => t.id === selectedTemplate)
+      if (tpl) {
+        for (const f of tpl.files) {
+          await writeFile(p.id, f.path, f.content)
+        }
       }
+      setShowNew(false)
+      setNewName('')
+      await refresh()
+      onOpen(p)
+    } catch (err) {
+      setImportMsg('Falha ao criar projeto: ' + (err as Error).message)
     }
-    setShowNew(false)
-    setNewName('')
-    await refresh()
-    onOpen(p)
   }
 
   const handleImportZip = async (file: File) => {
@@ -43,10 +47,15 @@ export function Home({ onOpen }: HomeProps) {
       const entries = extractZip(buf)
       const name = file.name.replace(/\.zip$/i, '') || 'Projeto importado'
       const p = await createProject(name)
+      let skipped = 0
       for (const e of entries) {
-        await writeFile(p.id, e.path, e.content)
+        try {
+          await writeFile(p.id, e.path, e.content)
+        } catch {
+          skipped++
+        }
       }
-      setImportMsg(`Importado: ${entries.length} arquivo(s).`)
+      setImportMsg(`Importado: ${entries.length - skipped} arquivo(s).${skipped ? ` ${skipped} ignorado(s) (caminho inválido).` : ''}`)
       await refresh()
       onOpen(p)
     } catch (err) {
@@ -55,13 +64,16 @@ export function Home({ onOpen }: HomeProps) {
   }
 
   const handleImportFiles = async (files: FileList) => {
-    const p = await createProject('Projeto importado')
-    for (const f of Array.from(files)) {
-      const text = await f.text()
-      await writeFile(p.id, f.name, text)
+    try {
+      const p = await createProject('Projeto importado')
+      for (const f of Array.from(files)) {
+        await writeFile(p.id, f.name, await f.text())
+      }
+      await refresh()
+      onOpen(p)
+    } catch (err) {
+      setImportMsg('Falha ao importar arquivos: ' + (err as Error).message)
     }
-    await refresh()
-    onOpen(p)
   }
 
   return (

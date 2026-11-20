@@ -2,9 +2,16 @@ import { useState, useEffect } from 'preact/hooks'
 import { provedorRegras } from '../tutor/provedores/regras'
 import { analisarEstrutura, separarHtml } from '../tutor/estrutura'
 import { detectarNivel, rotuloNivel } from '../tutor/nivel'
+import { findFile } from '../storage/projects'
 import type { Dica } from '../tutor/provedores/regras'
 
-export function TutorPanel({ activeFile, content, project, onRefreshFiles }: { activeFile: string | null; content: string; project: any; onRefreshFiles?: () => void }) {
+export function TutorPanel({ activeFile, content, project, onRefreshFiles, onExternalWrite }: {
+  activeFile: string | null
+  content: string
+  project: any
+  onRefreshFiles?: () => void
+  onExternalWrite?: (path: string, content: string) => void
+}) {
   const [dicas, setDicas] = useState<Dica[]>([])
   const [nivel, setNivel] = useState<'iniciante' | 'intermediario' | 'avancado'>('iniciante')
   const [modo, setModo] = useState<'aprendizado' | 'produtividade'>('aprendizado')
@@ -39,7 +46,12 @@ export function TutorPanel({ activeFile, content, project, onRefreshFiles }: { a
     if (!confirm('Separar este HTML em index.html, style.css e script.js?')) return
     setSeparando(true)
     try {
-      await separarHtml(project.id, activeFile, content)
+      const { created } = await separarHtml(project.id, activeFile, content)
+      // Propaga o conteúdo separado para as abas abertas (sem perder o trabalho do tutor).
+      for (const p of created) {
+        const rec = await findFile(project.id, p)
+        if (rec) onExternalWrite?.(p, rec.content)
+      }
       onRefreshFiles?.()
     } finally {
       setSeparando(false)

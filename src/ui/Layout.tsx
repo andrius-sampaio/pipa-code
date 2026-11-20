@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'preact/hooks'
+import type { EditorView } from 'codemirror'
+import { undo, redo } from '@codemirror/commands'
 import { loadPrefs, savePrefs, type Prefs, type Theme } from '../app/preferences'
 import { Explorer } from './Explorer'
 import { Editor } from '../editor/Editor'
 import { loadLanguageExtension, languageFromPath } from '../editor/languages'
-import { writeFile, findFile, listFiles } from '../storage/projects'
+import { writeFile, findFile, listFiles, touchProject } from '../storage/projects'
 import { Preview } from '../preview/Preview'
 import { ConsolePanel } from './ConsolePanel'
 import type { ConsoleEntry } from './ConsolePanel'
@@ -11,28 +13,58 @@ import { ProblemsPanel } from './ProblemsPanel'
 import { TutorPanel } from './TutorPanel'
 import { PythonPanel } from './PythonPanel'
 import type { ProjectRecord } from '../storage/db'
+import type { Diagnostic } from '../editor/diagnostics'
 
 interface LayoutProps {
   project: ProjectRecord
   onClose: () => void
 }
 
-function BottomPanel({ consoleEntries, setConsoleEntries, diagnostics, activeFile, contents, project, refreshFiles }: any) {
+interface WorkspaceProps {
+  project: ProjectRecord
+  openFiles: string[]
+  activeFile: string | null
+  contents: Record<string, string>
+  langs: Record<string, any>
+  onSelectFile: (path: string | null) => void
+  onCloseTab: (path: string) => void
+  onActivate: (path: string) => void
+  onChange: (path: string, value: string) => void
+  onSave: (path: string) => void
+  onConsole: (level: string, text: string) => void
+  onDiagnostics: (diags: Diagnostic[]) => void
+  onEditorReady: (view: EditorView) => void
+  onExternalWrite: (path: string, content: string) => void
+  refreshFiles: () => void
+  filesVersion: number
+}
+
+function BottomPanel({ consoleEntries, setConsoleEntries, diagnostics, activeFile, contents, project, refreshFiles, onExternalWrite, onJump }: {
+  consoleEntries: ConsoleEntry[]
+  setConsoleEntries: (updater: (prev: ConsoleEntry[]) => ConsoleEntry[]) => void
+  diagnostics: Diagnostic[]
+  activeFile: string | null
+  contents: Record<string, string>
+  project: ProjectRecord
+  refreshFiles: () => void
+  onExternalWrite: (path: string, content: string) => void
+  onJump: (d: Diagnostic) => void
+}) {
   const [tab, setTab] = useState<'problems' | 'console' | 'tutor' | 'python'>('problems')
   const content = activeFile ? (contents[activeFile] ?? '') : ''
   const isPy = !!activeFile && activeFile.endsWith('.py')
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div class="bottom-tabs">
         <button class={tab === 'problems' ? 'active' : ''} onClick={() => setTab('problems')}>Problemas ({diagnostics.length})</button>
         <button class={tab === 'console' ? 'active' : ''} onClick={() => setTab('console')}>Console ({consoleEntries.length})</button>
         <button class={tab === 'tutor' ? 'active' : ''} onClick={() => setTab('tutor')}>Tutor</button>
         {isPy && <button class={tab === 'python' ? 'active' : ''} onClick={() => setTab('python')}>Python</button>}
       </div>
-      <div class="panel-body" style={{ flex:1, overflow:'auto' }}>
-        {tab === 'problems' && <ProblemsPanel diagnostics={diagnostics} />}
-        {tab === 'console' && <ConsolePanel entries={consoleEntries} onClear={() => setConsoleEntries([])} />}
-        {tab === 'tutor' && <TutorPanel activeFile={activeFile} content={content} project={project} onRefreshFiles={refreshFiles} />}
+      <div class="panel-body" style={{ flex: 1, overflow: 'auto' }}>
+        {tab === 'problems' && <ProblemsPanel diagnostics={diagnostics} onJump={onJump} />}
+        {tab === 'console' && <ConsolePanel entries={consoleEntries} onClear={() => setConsoleEntries(() => [])} />}
+        {tab === 'tutor' && <TutorPanel activeFile={activeFile} content={content} project={project} onRefreshFiles={refreshFiles} onExternalWrite={onExternalWrite} />}
         {tab === 'python' && <PythonPanel content={content} />}
       </div>
     </div>
@@ -47,8 +79,10 @@ export function Layout({ project, onClose }: LayoutProps) {
   const [contents, setContents] = useState<Record<string, string>>({})
   const [langs, setLangs] = useState<Record<string, any>>({})
   const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([])
-  const [diagnostics, setDiagnostics] = useState<any[]>([])
+  const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([])
+  const [filesVersion, setFilesVersion] = useState(0)
   const saveTimers = useRef<Record<string, number>>({})
+  const editorViewRef = useRef<EditorView | null>(null)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', prefs.theme === 'dark' ? '' : prefs.theme)
@@ -57,6 +91,10 @@ export function Layout({ project, onClose }: LayoutProps) {
   }, [prefs.theme, prefs.zoom])
 
   useEffect(() => { savePrefs(prefs) }, [prefs])
+
+  useEffect(() => {
+    touchProject(project.id).catch(() => {})
+  }, [project.id])
 
   useEffect(() => {
     if (prefs.mode === 'desktop') return
@@ -95,10 +133,32 @@ export function Layout({ project, onClose }: LayoutProps) {
       if (cancelled) return
       const map: Record<string, string> = {}
       for (const f of fs) if (f.type === 'file') map[f.path] = f.content
+      // Conteúdos em memória (edições não salvas) têm prioridade.
       setContents((prev) => ({ ...map, ...prev }))
     })
     return () => { cancelled = true }
-  }, [project.id])
+  }, [project.id, filesVersion])
+
+  const refreshFiles = useCallback(() => setFilesVersion((v) => v + 1), [])
+  const handleEditorReady = useCallback((view: EditorView) => { editorViewRef.current = view }, [])
+
+  // Atualização externa de arquivos (ex.: tutor "Separar para mim"):
+  // descarta saves pendentes do arquivo e atualiza o conteúdo em memória.
+  const handleExternalWrite = useCallback((path: string, content: string) => {
+    if (saveTimers.current[path]) {
+      window.clearTimeout(saveTimers.current[path])
+      delete saveTimers.current[path]
+    }
+    setContents((prev) => ({ ...prev, [path]: content }))
+  }, [])
+
+  const jumpToDiagnostic = useCallback((d: Diagnostic) => {
+    const view = editorViewRef.current
+    if (!view) return
+    const to = Math.max(d.to, d.from)
+    view.dispatch({ selection: { anchor: d.from, head: to }, scrollIntoView: true })
+    view.focus()
+  }, [])
 
   const enterDesktop = useCallback(async () => {
     try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen() } catch {}
@@ -123,13 +183,14 @@ export function Layout({ project, onClose }: LayoutProps) {
       setOpenFiles((prev) => [...prev, path])
       const rec = await findFile(project.id, path)
       setContents((prev) => ({ ...prev, [path]: rec?.content ?? '' }))
-      if (!langs[path]) {
-        const ext = await loadLanguageExtension(path)
-        setLangs((prev) => ({ ...prev, [path]: ext }))
-      }
+      setLangs((prev) => {
+        if (prev[path]) return prev
+        loadLanguageExtension(path).then((ext) => setLangs((cur) => ({ ...cur, [path]: ext })))
+        return prev
+      })
     }
     setActiveFile(path)
-  }, [openFiles, project.id, langs])
+  }, [project.id, openFiles])
 
   const handleSelectFile = useCallback((path: string | null) => {
     if (path) openFile(path)
@@ -138,10 +199,11 @@ export function Layout({ project, onClose }: LayoutProps) {
   const closeTab = (path: string) => {
     setOpenFiles((prev) => prev.filter((p) => p !== path))
     setContents((prev) => { const c = { ...prev }; delete c[path]; return c })
-    if (activeFile === path) {
+    setActiveFile((prev) => {
+      if (prev !== path) return prev
       const remaining = openFiles.filter((p) => p !== path)
-      setActiveFile(remaining.length ? remaining[remaining.length - 1] : null)
-    }
+      return remaining.length ? remaining[remaining.length - 1] : null
+    })
   }
 
   const handleChange = (path: string, value: string) => {
@@ -157,6 +219,14 @@ export function Layout({ project, onClose }: LayoutProps) {
     writeFile(project.id, path, contents[path] ?? '').catch(() => {})
   }
 
+  const workspaceProps: WorkspaceProps = {
+    project, openFiles, activeFile, contents, langs,
+    onSelectFile: handleSelectFile, onCloseTab: closeTab, onActivate: setActiveFile,
+    onChange: handleChange, onSave: handleSave, onConsole: addConsole,
+    onDiagnostics: (d: Diagnostic[]) => setDiagnostics(d),
+    onEditorReady: handleEditorReady, onExternalWrite: handleExternalWrite,
+    refreshFiles, filesVersion,
+  }
   return (
     <div class={`pipa-code-app mode-${prefs.mode}`}>
       <header class="topbar">
@@ -201,14 +271,11 @@ export function Layout({ project, onClose }: LayoutProps) {
 
       <main class="workspace">
         {prefs.mode === 'desktop' ? (
-          <DesktopLayout prefs={prefs} togglePanel={togglePanel} project={project} openFiles={openFiles} activeFile={activeFile}
-            contents={contents} langs={langs} onSelectFile={handleSelectFile} onCloseTab={closeTab} onActivate={setActiveFile}
-            onChange={handleChange} onSave={handleSave} onConsole={addConsole} consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries}
-            onDiagnostics={(d: any[]) => setDiagnostics(d)} diagnostics={diagnostics} />
+          <DesktopLayout prefs={prefs} togglePanel={togglePanel} {...workspaceProps}
+            consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries}
+            diagnostics={diagnostics} onJump={jumpToDiagnostic} />
         ) : (
-          <TouchLayout project={project} openFiles={openFiles} activeFile={activeFile}
-            contents={contents} langs={langs} onSelectFile={handleSelectFile} onCloseTab={closeTab} onActivate={setActiveFile}
-            onChange={handleChange} onSave={handleSave} onConsole={addConsole} onDiagnostics={(d: any[]) => setDiagnostics(d)} />
+          <TouchLayout {...workspaceProps} />
         )}
       </main>
 
@@ -217,7 +284,7 @@ export function Layout({ project, onClose }: LayoutProps) {
         <span>Zoom: {Math.round(prefs.zoom * 100)}%</span>
         <span>Tema: {prefs.theme}</span>
         {activeFile && <span>Arquivo: {activeFile}</span>}
-        <span>Problemas: {diagnostics.filter((d: any) => d.severity === 'error').length} erros, {diagnostics.filter((d: any) => d.severity === 'warning').length} avisos</span>
+        <span>Problemas: {diagnostics.filter((d) => d.severity === 'error').length} erros, {diagnostics.filter((d) => d.severity === 'warning').length} avisos</span>
       </footer>
     </div>
   )
@@ -225,7 +292,15 @@ export function Layout({ project, onClose }: LayoutProps) {
 
 // Colapso tipo sanfona: um wrapper com overflow:hidden anima a largura/altura até 0,
 // enquanto o painel interno mantém largura/altura FIXA (não reflui, não sobrepõe).
-function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, consoleEntries, setConsoleEntries, onDiagnostics, diagnostics }: any) {
+function DesktopLayout(props: WorkspaceProps & {
+  prefs: Prefs
+  togglePanel: (key: keyof Prefs['desktopPanels']) => void
+  consoleEntries: ConsoleEntry[]
+  setConsoleEntries: (updater: (prev: ConsoleEntry[]) => ConsoleEntry[]) => void
+  diagnostics: Diagnostic[]
+  onJump: (d: Diagnostic) => void
+}) {
+  const { prefs, togglePanel, project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, onDiagnostics, onEditorReady, onExternalWrite, refreshFiles, filesVersion, consoleEntries, setConsoleEntries, diagnostics, onJump } = props
   const [explorerW, setExplorerW] = useState(230)
   const [previewW, setPreviewW] = useState(300)
   const [bottomH, setBottomH] = useState(180)
@@ -237,6 +312,19 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
       const delta = ev.clientX - start
       const val = invert ? initial - delta : initial + delta
       setter(Math.min(max, Math.max(min, val)))
+    }
+    const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  const dragY = (initial: number) => (e: MouseEvent) => {
+    e.preventDefault()
+    const start = e.clientY
+    const onMove = (ev: MouseEvent) => {
+      const delta = ev.clientY - start
+      // Arrastar para cima aumenta o painel, para baixo diminui.
+      setBottomH(Math.min(400, Math.max(100, initial - delta)))
     }
     const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
     window.addEventListener('mousemove', onMove)
@@ -255,7 +343,7 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
               <button class="panel-close" onClick={() => togglePanel('explorer')} aria-label="Recolher explorador" title="Recolher">−</button>
             </header>
             <div class="panel-body">
-              <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} />
+              <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} refreshToken={filesVersion} />
             </div>
           </aside>
         </div>
@@ -267,7 +355,7 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
         <section class="editor-area" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div class="tabs">
             {openFiles.length === 0 && <span class="muted">Nenhum arquivo aberto</span>}
-            {openFiles.map((p: string) => (
+            {openFiles.map((p) => (
               <button key={p} class={`tab ${activeFile === p ? 'active' : ''}`} onClick={() => onActivate(p)}>
                 {p.split('/').pop()}
                 <span class="tab-close" onClick={(e) => { e.stopPropagation(); onCloseTab(p) }}>×</span>
@@ -276,7 +364,7 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
           </div>
           <div class="editor-host">
             {activeFile ? (
-              <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} languageId={activeFile ? languageFromPath(activeFile) : 'javascript'} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} onDiagnostics={(d: any[]) => onDiagnostics(d)} />
+              <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} languageId={languageFromPath(activeFile)} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} onDiagnostics={onDiagnostics} onReady={onEditorReady} />
             ) : (
               <div class="editor-placeholder">Abra um arquivo no explorador</div>
             )}
@@ -304,25 +392,14 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
       <div style={{ height: prefs.desktopPanels.bottom ? bottomH + 'px' : '0px', overflow: 'hidden', transition: 'height .2s ease', flexShrink: 0, display: 'flex', flexDirection: 'column', borderTop: prefs.desktopPanels.bottom ? '1px solid var(--border)' : 'none' }}>
         {prefs.desktopPanels.bottom && (
           <>
-            <div class="resizer-h" style={{ height: '6px', cursor: 'row-resize', flexShrink: 0 }} onMouseDown={(e) => {
-              e.preventDefault()
-              const start = e.clientY
-              const initial = bottomH
-              const onMove = (ev: MouseEvent) => {
-                const delta = ev.clientY - start
-                setBottomH(Math.min(400, Math.max(100, initial + delta)))
-              }
-              const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
-              window.addEventListener('mousemove', onMove)
-              window.addEventListener('mouseup', onUp)
-            }} />
+            <div class="resizer-h" style={{ height: '6px', cursor: 'row-resize', flexShrink: 0 }} onMouseDown={dragY(bottomH)} />
             <div class="bottom-panel" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               <header class="panel-header">
                 PAINEL
                 <button class="panel-close" onClick={() => togglePanel('bottom')} aria-label="Recolher painel" title="Recolher">−</button>
               </header>
-              <div class="panel-body" style={{ flex:1, overflow:'auto' }}>
-                <BottomPanel consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} diagnostics={diagnostics} activeFile={activeFile} contents={contents} project={project} refreshFiles={() => {}} />
+              <div class="panel-body" style={{ flex: 1, overflow: 'auto' }}>
+                <BottomPanel consoleEntries={consoleEntries} setConsoleEntries={setConsoleEntries} diagnostics={diagnostics} activeFile={activeFile} contents={contents} project={project} refreshFiles={refreshFiles} onExternalWrite={onExternalWrite} onJump={onJump} />
               </div>
             </div>
           </>
@@ -332,17 +409,41 @@ function DesktopLayout({ prefs, togglePanel, project, openFiles, activeFile, con
   )
 }
 
-function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, onDiagnostics }: any) {
+function TouchLayout(props: WorkspaceProps) {
+  const { project, openFiles, activeFile, contents, langs, onSelectFile, onCloseTab, onActivate, onChange, onSave, onConsole, onDiagnostics, onEditorReady, onExternalWrite, refreshFiles, filesVersion } = props
   const [tab, setTab] = useState<'files' | 'code' | 'result' | 'tutor'>('code')
+  const editorViewRef = useRef<EditorView | null>(null)
+
+  const insertText = (text: string) => {
+    const view = editorViewRef.current
+    if (!view) return
+    const { from, to } = view.state.selection.main
+    view.dispatch({ changes: { from, to, insert: text }, selection: { anchor: from + text.length }, scrollIntoView: true })
+    view.focus()
+  }
+
+  const insertPair = (pair: string) => {
+    const view = editorViewRef.current
+    if (!view) return
+    const { from, to } = view.state.selection.main
+    const mid = from + pair.length / 2
+    view.dispatch({ changes: { from, to, insert: pair }, selection: { anchor: mid }, scrollIntoView: true })
+    view.focus()
+  }
+
+  const handleUndo = () => { const v = editorViewRef.current; if (v) undo(v) }
+  const handleRedo = () => { const v = editorViewRef.current; if (v) redo(v) }
+  const handleEditorReady = (view: EditorView) => { editorViewRef.current = view; onEditorReady(view) }
+
   return (
     <div class="touch-layout">
       <div class="touch-content">
-        {tab === 'files' && <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} />}
+        {tab === 'files' && <Explorer project={project} selectedFile={activeFile} onSelectFile={onSelectFile} refreshToken={filesVersion} />}
         {tab === 'code' && (
           <div class="editor-host">
             {openFiles.length > 0 && (
               <div class="tabs">
-                {openFiles.map((p: string) => (
+                {openFiles.map((p) => (
                   <button key={p} class={`tab ${activeFile === p ? 'active' : ''}`} onClick={() => onActivate(p)}>
                     {p.split('/').pop()}
                     <span class="tab-close" onClick={(e) => { e.stopPropagation(); onCloseTab(p) }}>×</span>
@@ -351,14 +452,14 @@ function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelect
               </div>
             )}
             {activeFile ? (
-              <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} languageId={activeFile ? languageFromPath(activeFile) : 'javascript'} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} onDiagnostics={(d: any[]) => onDiagnostics(d)} />
+              <Editor value={contents[activeFile] ?? ''} language={langs[activeFile]} languageId={languageFromPath(activeFile)} onChange={(v: string) => onChange(activeFile, v)} onSave={() => onSave(activeFile)} onDiagnostics={onDiagnostics} onReady={handleEditorReady} />
             ) : (
               <div class="editor-placeholder">Abra um arquivo no explorador</div>
             )}
           </div>
         )}
         {tab === 'result' && <div class="panel-body"><Preview contents={contents} onConsole={onConsole} /></div>}
-        {tab === 'tutor' && <div class="panel-body"><TutorPanel activeFile={activeFile} content={activeFile ? (contents[activeFile] ?? '') : ''} project={project} onRefreshFiles={() => {}} /></div>}
+        {tab === 'tutor' && <div class="panel-body"><TutorPanel activeFile={activeFile} content={activeFile ? (contents[activeFile] ?? '') : ''} project={project} onRefreshFiles={refreshFiles} onExternalWrite={onExternalWrite} /></div>}
       </div>
       <nav class="touch-nav">
         <button class={tab === 'files' ? 'active' : ''} onClick={() => setTab('files')}>Arquivos</button>
@@ -367,9 +468,20 @@ function TouchLayout({ project, openFiles, activeFile, contents, langs, onSelect
         <button class={tab === 'tutor' ? 'active' : ''} onClick={() => setTab('tutor')}>Tutor</button>
       </nav>
       <div class="symbol-bar">
-        <button>Tab</button><button>{'{}'}</button><button>{'()'}</button><button>{'[]'}</button>
-        <button>{'<>'}</button><button>;</button><button>:</button><button>"</button><button>'</button>
-        <button>=</button><button>/</button><button>#</button><button>Undo</button><button>Redo</button>
+        <button onClick={() => insertText('\t')} title="Tab">Tab</button>
+        <button onClick={() => insertPair('{}')} title="Chaves">{'{}'}</button>
+        <button onClick={() => insertPair('()')} title="Parênteses">{'()'}</button>
+        <button onClick={() => insertPair('[]')} title="Colchetes">{'[]'}</button>
+        <button onClick={() => insertPair('<>')} title="Menor/maior">{'<>'}</button>
+        <button onClick={() => insertText(';')} title="Ponto e vírgula">;</button>
+        <button onClick={() => insertText(':')} title="Dois pontos">:</button>
+        <button onClick={() => insertPair('""')} title="Aspas duplas">"</button>
+        <button onClick={() => insertPair("''")} title="Aspas simples">'</button>
+        <button onClick={() => insertText('=')} title="Igual">=</button>
+        <button onClick={() => insertText('/')} title="Barra">/</button>
+        <button onClick={() => insertText('#')} title="Cerquilha">#</button>
+        <button onClick={handleUndo} title="Desfazer">Undo</button>
+        <button onClick={handleRedo} title="Refazer">Redo</button>
       </div>
     </div>
   )
